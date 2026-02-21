@@ -3,7 +3,19 @@ using Features;
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddHttpClient<EnrichHandler>();
 
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(policy =>
+    {
+        policy.AllowAnyOrigin()
+              .AllowAnyMethod()
+              .AllowAnyHeader();
+    });
+});
+
 var app = builder.Build();
+
+app.UseCors();
 
 app.MapGet("/", () => "Hello World!");
 
