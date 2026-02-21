@@ -1,15 +1,15 @@
 using Features;
 
 var builder = WebApplication.CreateBuilder(args);
-builder.Services.AddScoped<EnrichHandler>();
+builder.Services.AddHttpClient<EnrichHandler>();
 
 var app = builder.Build();
 
 app.MapGet("/", () => "Hello World!");
 
-app.MapPost("/enrich", (string word, EnrichHandler handler) =>
+app.MapPost("/enrich", async (string word, EnrichHandler handler) =>
 {
-    return handler.Enrich(word);
+    return await handler.Enrich(word);
 });
 
 app.Run();
