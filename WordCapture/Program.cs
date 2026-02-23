@@ -5,6 +5,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddHttpClient<EnrichHandler>();
 builder.Services.AddHttpClient<TranslateHandler>();
 builder.Services.AddHttpClient<TelegramBotHandler>();
+builder.Services.AddSingleton<CardStore>();
 
 builder.Services.AddCors(options =>
 {
@@ -51,6 +52,17 @@ app.MapPost("/bot/webhook", async (HttpRequest request, TelegramBotHandler handl
     var update = await JsonSerializer.DeserializeAsync<JsonElement>(request.Body);
     await handler.HandleUpdate(update);
     return Results.Ok();
+});
+
+app.MapPost("/save", (string original, string translation, Features.CardStore store) =>
+{
+    store.Save(original, translation);
+    return Results.Ok();
+});
+
+app.MapGet("/cards", (Features.CardStore store) =>
+{
+    return Results.Json(store.GetAll());
 });
 
 app.Run();
