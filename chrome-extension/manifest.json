@@ -12,7 +12,7 @@
         "activeTab"
     ],
     "host_permissions": [
-        "http://localhost:5092/*"
+        "https://wordcapture.app.zlobur.com/*"
     ],
     "content_scripts": [
         {

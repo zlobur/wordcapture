@@ -1,10 +1,14 @@
+console.log("WordCapture content script loaded");
 document.addEventListener("mouseup", () => {
     const word = window.getSelection().toString().trim();
+    console.log("mouseup word:", word);
     if (!word || word.includes(" ")) return;
 
+    const range = window.getSelection().getRangeAt(0);
     chrome.runtime.sendMessage({ type: "translate", word }, (response) => {
-        if (response.success) {
-            showPopup(response.result, window.getSelection().getRangeAt(0));
+        console.log("response:", response, chrome.runtime.lastError);
+        if (response?.success) {
+            showPopup(response.result, range);
         }
     });
 });
