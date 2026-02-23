@@ -36,8 +36,6 @@ app.UseCors();
 app.UseDefaultFiles();
 app.UseStaticFiles();
 
-app.MapGet("/", () => "Hello World!");
-
 app.MapPost("/enrich", async (string word, EnrichHandler handler) =>
 {
     return await handler.Enrich(word);
