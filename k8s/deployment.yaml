@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wordcapture
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: wordcapture
+  template:
+    metadata:
+      labels:
+        app: wordcapture
+    spec:
+      imagePullSecrets:
+        - name: ghcr-secret
+      containers:
+        - name: wordcapture
+          image: ghcr.io/zlobur/wordcapture:latest
+          ports:
+            - containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: wordcapture
+spec:
+  selector:
+    app: wordcapture
+  ports:
+    - port: 80
+      targetPort: 80
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: wordcapture
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: wordcapture.app.zlobur.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: wordcapture
+                port:
+                  number: 80

@@ -1,14 +1,12 @@
-document.addEventListener("mouseup", async () => {
+document.addEventListener("mouseup", () => {
     const word = window.getSelection().toString().trim();
+    if (!word) return;
 
-    if (!word || word.includes(" ")) return;
-
-    const response = await fetch(`http://localhost:5092/enrich?word=${word}`, {
-        method: "POST"
+    chrome.runtime.sendMessage({ type: "enrich", word }, (response) => {
+        if (response.success) {
+            showPopup(response.result, window.getSelection().getRangeAt(0));
+        }
     });
-
-    const result = await response.json();
-    showPopup(result, window.getSelection().getRangeAt(0));
 });
 
 function showPopup(result, range) {
@@ -20,7 +18,7 @@ function showPopup(result, range) {
     popup.id = "wc-popup";
     popup.style.cssText = `
         position: fixed;
-        top: ${rect.bottom + window.scrollY + 8}px;
+        top: ${rect.bottom + 8}px;
         left: ${rect.left}px;
         background: white;
         border: 1px solid #ccc;
@@ -33,12 +31,18 @@ function showPopup(result, range) {
     `;
 
     popup.innerHTML = `
-        <strong>${result.word}</strong> ${result.transcription}<br>
-        <span style="color:#666">${result.translation}</span><br><br>
-        <small>${result.context.replace(/\n/g, "<br>")}</small>
-    `;
+    <strong>${result.original}</strong><br>
+    <span style="color:#666">${result.translation}</span>
+`;
 
     document.body.appendChild(popup);
 
-    setTimeout(() => popup.remove(), 8000);
+    setTimeout(() => {
+        document.addEventListener("click", function handler(e) {
+            if (!popup.contains(e.target)) {
+                popup.remove();
+                document.removeEventListener("click", handler);
+            }
+        });
+    }, 100);
 }
