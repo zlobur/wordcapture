@@ -1,8 +1,10 @@
+using System.Text.Json;
 using Features;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddHttpClient<EnrichHandler>();
 builder.Services.AddHttpClient<TranslateHandler>();
+builder.Services.AddHttpClient<TelegramBotHandler>();
 
 builder.Services.AddCors(options =>
 {
@@ -31,6 +33,8 @@ app.Use(async (context, next) =>
 });
 
 app.UseCors();
+app.UseDefaultFiles();
+app.UseStaticFiles();
 
 app.MapGet("/", () => "Hello World!");
 
@@ -42,6 +46,13 @@ app.MapPost("/enrich", async (string word, EnrichHandler handler) =>
 app.MapPost("/translate", async (string text, TranslateHandler handler) =>
 {
     return await handler.Translate(text);
+});
+
+app.MapPost("/bot/webhook", async (HttpRequest request, TelegramBotHandler handler) =>
+{
+    var update = await JsonSerializer.DeserializeAsync<JsonElement>(request.Body);
+    await handler.HandleUpdate(update);
+    return Results.Ok();
 });
 
 app.Run();

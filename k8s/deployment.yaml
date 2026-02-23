@@ -19,6 +19,22 @@ spec:
           image: ghcr.io/zlobur/wordcapture:f0198f90fece4815d598728480473418f91d81ab
           ports:
             - containerPort: 80
+          env:
+            - name: Telegram__BotToken
+              valueFrom:
+                secretKeyRef:
+                  name: wordcapture-secrets
+                  key: telegram-bot-token
+            - name: DeepLKey
+              valueFrom:
+                secretKeyRef:
+                  name: wordcapture-secrets
+                  key: deepl-key
+            - name: Grok__ApiKey
+              valueFrom:
+                secretKeyRef:
+                  name: wordcapture-secrets
+                  key: grok-api-key
 ---
 apiVersion: v1
 kind: Service
