@@ -1,8 +1,9 @@
 console.log("WordCapture content script loaded");
-document.addEventListener("mouseup", () => {
+document.addEventListener("mouseup", (e) => {
+    if (document.getElementById("wc-popup")?.contains(e.target)) return;
     const word = window.getSelection().toString().trim();
     console.log("mouseup word:", word);
-    if (!word || word.includes(" ")) return;
+    if (!word) return;
 
     const range = window.getSelection().getRangeAt(0);
     chrome.runtime.sendMessage({ type: "translate", word }, (response) => {
