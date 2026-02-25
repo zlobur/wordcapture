@@ -1,3 +1,7 @@
+const wcFont = document.createElement("link");
+wcFont.href = "https://fonts.googleapis.com/css2?family=Merriweather&display=swap";
+wcFont.rel = "stylesheet";
+document.head.appendChild(wcFont);
 console.log("WordCapture content script loaded");
 document.addEventListener("mouseup", (e) => {
     if (document.getElementById("wc-popup")?.contains(e.target)) return;
@@ -25,14 +29,16 @@ function showPopup(result, range) {
         position: fixed;
         top: ${rect.bottom + 8}px;
         left: ${rect.left}px;
-        background: white;
-        border: 1px solid #ccc;
-        border-radius: 8px;
-        padding: 12px;
-        font-size: 14px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        background: linear-gradient(145deg, #1e3a5f, #162d4a);
+        border: none;
+        border-radius: 10px;
+        padding: 16px 18px;
+        font-family: 'Merriweather', Georgia, serif;
+        font-size: 15px;
+        color: #e8edf3;
+        box-shadow: 4px 4px 10px rgba(0,0,0,0.4), -2px -2px 6px rgba(255,255,255,0.05), inset 0 1px 0 rgba(255,255,255,0.08);
         z-index: 999999;
-        max-width: 300px;
+        max-width: 320px;
     `;
 
     const saveBtn = document.createElement("button");
@@ -46,10 +52,7 @@ function showPopup(result, range) {
             saveBtn.disabled = true;
         });
     });
-    popup.innerHTML = `
-    <strong>${result.original}</strong><br>
-    <span style="color:#666">${result.translation}</span>
-`;
+    popup.innerHTML = `<span>${result.translation}</span>`;
 
     popup.prepend(saveBtn);
     document.body.appendChild(popup);

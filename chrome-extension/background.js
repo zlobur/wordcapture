@@ -1,22 +1,42 @@
+chrome.runtime.onInstalled.addListener(() => {
+    chrome.storage.local.get("extensionId", (data) => {
+        if (!data.extensionId) {
+            chrome.storage.local.set({ extensionId: crypto.randomUUID() });
+        }
+    });
+});
+
+async function getExtensionId() {
+    return new Promise((resolve) => {
+        chrome.storage.local.get("extensionId", (data) => {
+            resolve(data.extensionId);
+        });
+    });
+}
+
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.type === "translate") {
-        fetch(`https://wordcapture.app.zlobur.com/translate?text=${encodeURIComponent(request.word)}`, {
-            method: "POST"
-        })
-            .then(r => { console.log("status:", r.status); return r.text(); })
-            .then(text => { console.log("body:", text); return JSON.parse(text); })
-            .then(result => sendResponse({ success: true, result }))
-            .catch(err => sendResponse({ success: false, error: err.message }));
-
+        getExtensionId().then((id) => {
+            fetch(`https://wordcapture.app.zlobur.com/translate?text=${encodeURIComponent(request.word)}`, {
+                method: "POST",
+                headers: { "X-Extension-Id": id }
+            })
+                .then(r => r.text())
+                .then(text => JSON.parse(text))
+                .then(result => sendResponse({ success: true, result }))
+                .catch(err => sendResponse({ success: false, error: err.message }));
+        });
         return true;
     }
     if (request.type === "save") {
-        fetch(`https://wordcapture.app.zlobur.com/save?original=${encodeURIComponent(request.original)}&translation=${encodeURIComponent(request.translation)}`, {
-            method: "POST"
-        })
-            .then(() => sendResponse({ success: true }))
-            .catch(err => sendResponse({ success: false, error: err.message }));
-
+        getExtensionId().then((id) => {
+            fetch(`https://wordcapture.app.zlobur.com/save?original=${encodeURIComponent(request.original)}&translation=${encodeURIComponent(request.translation)}`, {
+                method: "POST",
+                headers: { "X-Extension-Id": id }
+            })
+                .then(() => sendResponse({ success: true }))
+                .catch(err => sendResponse({ success: false, error: err.message }));
+        });
         return true;
     }
 });

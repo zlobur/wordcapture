@@ -7,9 +7,12 @@
         "48": "images/icon-48.png",
         "128": "images/icon-128.png"
     },
-    "action": {},
+    "action": {
+        "default_popup": "popup.html"
+    },
     "permissions": [
-        "activeTab"
+        "activeTab",
+        "storage"
     ],
     "host_permissions": [
         "https://wordcapture.app.zlobur.com/*"
