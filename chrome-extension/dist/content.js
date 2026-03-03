@@ -1,0 +1,62 @@
+const c={bg:"#1e1e2e",border:"rgba(56,163,237,0.3)",accentText:"#5cb8f7",text:"#e2e8f0",textMuted:"#94a3b8",textDim:"#64748b",success:"#22c55e",successBg:"rgba(34,197,94,0.15)",gradient:"linear-gradient(135deg, #0078d4, #38a3ed)"},T="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;600;700&display=swap",L=document.createElement("link");L.href=T;L.rel="stylesheet";document.head.appendChild(L);let l=null,d=null,y="",v=null;function E(){return new Promise(r=>{chrome.storage.local.get("settings",e=>{const t=e.settings||{};r({activeLang:t.activeLang||"en",targetLang:t.targetLang||"ru",defaultFromLang:t.defaultFromLang||"en",defaultToLang:t.defaultToLang||"ru"})})})}function M(r){let e=0,t=0,n=0;for(const i of r){const s=i.codePointAt(0);s<64||(n++,s>=1024&&s<=1279?e++:(s>=12352&&s<=12543||s>=19968&&s<=40959||s>=65280&&s<=65519)&&t++)}return n===0?"latin":e/n>.3?"cyrillic":t/n>.2?"cjk":"latin"}function $(r){const e=M(r);return e==="cyrillic"?"ru":e==="cjk"?"ja":"en"}function S(r,e){const t=$(r);let n=e.activeLang,i=e.targetLang;return t===n?{from:n,to:i}:t===i?{from:i,to:n}:(n=t,n===i&&(i=e.defaultToLang,n===i&&(i="ru")),{from:n,to:i})}document.addEventListener("mouseup",r=>{const e=r.target;if(l!=null&&l.contains(e)||d!=null&&d.contains(e))return;h();const t=window.getSelection(),n=t==null?void 0:t.toString().trim();if(!n||n.length>200||!n.match(/\S/))return;const i=t.getRangeAt(0);y=n,v=i.cloneRange(),k(i)});function k(r){h();const e=r.getBoundingClientRect(),t=document.createElement("div");t.id="wc-badge";const n=Math.max(4,e.top-12+window.scrollY),i=Math.min(e.right+4,window.innerWidth-32);t.style.cssText=`
+    position: absolute;
+    top: ${n}px;
+    left: ${i}px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: ${c.gradient};
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 2147483647;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.4), 0 0 12px rgba(56,163,237,0.15);
+    font-family: 'DM Sans', system-ui, sans-serif;
+    font-size: 9px;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: -0.5px;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    user-select: none;
+  `,t.textContent="Wc",t.addEventListener("mouseenter",()=>{t.style.transform="scale(1.15)",t.style.boxShadow="0 4px 12px rgba(0,0,0,0.5), 0 0 16px rgba(56,163,237,0.25)"}),t.addEventListener("mouseleave",()=>{t.style.transform="scale(1)",t.style.boxShadow="0 2px 8px rgba(0,0,0,0.4), 0 0 12px rgba(56,163,237,0.15)"}),t.addEventListener("click",async s=>{if(s.preventDefault(),s.stopPropagation(),!y||!v)return;const a=y,b=v;h(),D(b);const w=await E(),u=S(a,w),x=setTimeout(()=>{f()},1e4);chrome.runtime.sendMessage({type:"translate",word:a,sourceLang:u.from,targetLang:u.to},p=>{if(clearTimeout(x),f(),chrome.runtime.lastError){console.warn("WordCapture:",chrome.runtime.lastError.message);return}if(p!=null&&p.success){const o=p.result,g=typeof o=="string"?o:(o==null?void 0:o.translation)||(o==null?void 0:o.text)||(o==null?void 0:o.translatedText)||String(o);z(a,{original:a,translation:g},b,u.from,u.to)}})}),document.body.appendChild(t),l=t,setTimeout(()=>{const s=a=>{l&&!l.contains(a.target)&&(h(),document.removeEventListener("mousedown",s))};document.addEventListener("mousedown",s)},100)}function D(r){f();const e=r.getBoundingClientRect(),t=document.createElement("div");t.id="wc-popup";const n=Math.min(e.bottom+8,window.innerHeight-80),i=Math.max(8,Math.min(e.left,window.innerWidth-320));t.style.cssText=`
+    position: fixed;
+    top: ${n}px;
+    left: ${i}px;
+    width: 200px;
+    background: ${c.bg};
+    border: 1px solid ${c.border};
+    border-radius: 14px;
+    padding: 14px 16px;
+    font-family: 'DM Sans', system-ui, sans-serif;
+    font-size: 13px;
+    color: ${c.textDim};
+    box-shadow: 0 12px 40px rgba(0,0,0,0.5);
+    z-index: 2147483647;
+    text-align: center;
+  `,t.textContent="Translating...",document.body.appendChild(t),d=t}function z(r,e,t,n,i){f();const s=t.getBoundingClientRect(),a=document.createElement("div");a.id="wc-popup";const b=Math.min(s.bottom+8,window.innerHeight-200),w=Math.max(8,Math.min(s.left,window.innerWidth-320));a.style.cssText=`
+    position: fixed;
+    top: ${b}px;
+    left: ${w}px;
+    width: 300px;
+    background: ${c.bg};
+    border: 1px solid ${c.border};
+    border-radius: 14px;
+    padding: 14px 16px;
+    font-family: 'DM Sans', system-ui, sans-serif;
+    font-size: 14px;
+    color: ${c.text};
+    box-shadow: 0 12px 40px rgba(0,0,0,0.5), 0 0 20px rgba(56,163,237,0.06);
+    z-index: 2147483647;
+    line-height: 1.4;
+  `;const u=document.createElement("div");u.style.cssText="display:flex;align-items:baseline;gap:10px;margin-bottom:6px;",u.innerHTML=`<span style="font-size:18px;font-weight:700;color:${c.text}">${B(r)}</span>`,a.appendChild(u);const x=document.createElement("div");x.style.cssText=`font-size:14px;color:${c.accentText};margin-bottom:10px;`,x.textContent=e.translation,a.appendChild(x);const p=document.createElement("div");p.style.cssText="display:flex;gap:8px;";const o=document.createElement("button");o.textContent="+ Add to Cards",o.style.cssText=`
+    flex:1;
+    background: ${c.gradient};
+    border:none; color:#fff; border-radius:8px; padding:8px 0;
+    font-size:12px; font-weight:600; cursor:pointer;
+    font-family: 'DM Sans', system-ui, sans-serif;
+  `,o.addEventListener("click",m=>{m.stopPropagation(),chrome.runtime.sendMessage({type:"save",original:e.original,translation:e.translation,sourceLang:n,targetLang:i,sourceUrl:window.location.href},()=>{o.textContent="✓ Saved",o.style.background=c.successBg,o.style.color=c.success})}),p.appendChild(o);const g=document.createElement("button");g.textContent="✕",g.style.cssText=`
+    background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.08);
+    color:${c.textMuted}; border-radius:8px; padding:8px 12px;
+    font-size:12px; cursor:pointer; font-family:'DM Sans',system-ui,sans-serif;
+  `,g.addEventListener("click",m=>{m.stopPropagation(),f()}),p.appendChild(g),a.appendChild(p),document.body.appendChild(a),d=a,setTimeout(()=>{const m=C=>{d&&!d.contains(C.target)&&(f(),document.removeEventListener("mousedown",m))};document.addEventListener("mousedown",m)},200)}function h(){l==null||l.remove(),l=null}function f(){d==null||d.remove(),d=null}function B(r){const e=document.createElement("div");return e.textContent=r,e.innerHTML}console.log("WordCapture content script loaded");
