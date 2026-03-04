@@ -308,14 +308,14 @@ export function useCards() {
   const getDueCount = useCallback((deckId: string) => {
     const now = new Date().toISOString();
     return load<Card[]>(KEYS.cards, []).filter(
-      (c) => c.deckId === deckId && c.srs.nextReviewAt && c.srs.nextReviewAt <= now
+      (c) => c.deckId === deckId && (c.srs.nextReviewAt === null || c.srs.nextReviewAt <= now)
     ).length;
   }, []);
 
   const getDueCountTotal = useCallback(() => {
     const now = new Date().toISOString();
     return load<Card[]>(KEYS.cards, []).filter(
-      (c) => c.deckId !== null && c.srs.nextReviewAt && c.srs.nextReviewAt <= now
+      (c) => c.deckId !== null && (c.srs.nextReviewAt === null || c.srs.nextReviewAt <= now)
     ).length;
   }, []);
 

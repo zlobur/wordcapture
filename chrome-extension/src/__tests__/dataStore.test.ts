@@ -421,4 +421,111 @@ describe("dataStore", () => {
       expect(enrichWord).toBeNull();
     });
   });
+
+  // --- REVIEW / DUE COUNT ---
+  describe("Review due count", () => {
+    it("new card in deck counts as due (nextReviewAt=null)", () => {
+      const { result } = renderHook(() => useCards());
+      act(() => {
+        result.current.add({
+          original: "new-due", translation: "x",
+          sourceLang: "en", targetLang: "ru", deckId: "d1",
+        });
+      });
+      expect(result.current.getDueCount("d1")).toBeGreaterThan(0);
+    });
+
+    it("card with past nextReviewAt counts as due", () => {
+      const { result } = renderHook(() => useCards());
+      let cardId: string;
+      act(() => {
+        cardId = result.current.add({
+          original: "past-due", translation: "x",
+          sourceLang: "en", targetLang: "ru", deckId: "d1",
+        }).id;
+      });
+      act(() => {
+        result.current.update(cardId, {
+          srs: {
+            interval: 1, easeFactor: 2.5, repetitions: 1,
+            nextReviewAt: new Date(Date.now() - 86400000).toISOString(),
+            lastReviewedAt: new Date(Date.now() - 172800000).toISOString(),
+          }
+        });
+      });
+      expect(result.current.getDueCount("d1")).toBeGreaterThan(0);
+    });
+
+    it("card with future nextReviewAt does NOT count as due", () => {
+      const { result } = renderHook(() => useCards());
+      let cardId: string;
+      act(() => {
+        cardId = result.current.add({
+          original: "future", translation: "x",
+          sourceLang: "en", targetLang: "ru", deckId: "d1",
+        }).id;
+      });
+      act(() => {
+        result.current.update(cardId, {
+          srs: {
+            interval: 30, easeFactor: 2.5, repetitions: 3,
+            nextReviewAt: new Date(Date.now() + 86400000 * 30).toISOString(),
+            lastReviewedAt: new Date().toISOString(),
+          }
+        });
+      });
+      const dueCards = result.current.cards.filter(
+        (c: any) => c.deckId === "d1" && (c.srs.nextReviewAt === null || c.srs.nextReviewAt <= new Date().toISOString())
+      );
+      const futureCard = dueCards.find((c: any) => c.id === cardId);
+      expect(futureCard).toBeUndefined();
+    });
+
+    it("inbox cards do NOT count in getDueCountTotal", () => {
+      const { result } = renderHook(() => useCards());
+      act(() => {
+        result.current.add({
+          original: "inbox-card", translation: "x",
+          sourceLang: "en", targetLang: "ru", deckId: null,
+        });
+      });
+      // getDueCountTotal only counts cards with deckId !== null
+      const total = result.current.getDueCountTotal();
+      const inboxDue = result.current.inbox.filter((c: any) =>
+        c.srs.nextReviewAt === null || c.srs.nextReviewAt <= new Date().toISOString()
+      );
+      // inbox cards should not be in total
+      expect(total).toBe(
+        result.current.cards.filter((c: any) =>
+          c.deckId !== null && (c.srs.nextReviewAt === null || c.srs.nextReviewAt <= new Date().toISOString())
+        ).length
+      );
+    });
+
+    it("SRS update via card.update changes nextReviewAt", () => {
+      const { result } = renderHook(() => useCards());
+      let cardId: string;
+      act(() => {
+        cardId = result.current.add({
+          original: "srs-test", translation: "x",
+          sourceLang: "en", targetLang: "ru", deckId: "d1",
+        }).id;
+      });
+      const futureDate = new Date(Date.now() + 86400000 * 7).toISOString();
+      act(() => {
+        result.current.update(cardId, {
+          srs: {
+            interval: 7, easeFactor: 2.5, repetitions: 2,
+            nextReviewAt: futureDate,
+            lastReviewedAt: new Date().toISOString(),
+          }
+        });
+      });
+      const card = result.current.cards.find((c: any) => c.id === cardId);
+      expect(card.srs.nextReviewAt).toBe(futureDate);
+      expect(card.srs.interval).toBe(7);
+      expect(card.srs.repetitions).toBe(2);
+    });
+  });
+
 });

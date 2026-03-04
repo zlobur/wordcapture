@@ -21,14 +21,16 @@ interface TransResult {
   transcription?: string;
   cefr?: string;
   pos?: string;
+  enriching?: boolean; // true while enrich is loading
 }
 
 export function TranslatePanel({ langFrom, langTo, onChangeLangFrom, onChangeLangTo }: Props) {
   const [input, setInput] = useState("");
   const [result, setResult] = useState<TransResult | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [translating, setTranslating] = useState(false);
   const [saved, setSaved] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const enrichAbort = useRef(0); // generation counter to cancel stale enrich
   const { add: addCard } = useCards();
   const fromLang = LANGUAGES.find((l) => l.code === langFrom);
   const toLang = LANGUAGES.find((l) => l.code === langTo);
@@ -41,15 +43,25 @@ export function TranslatePanel({ langFrom, langTo, onChangeLangFrom, onChangeLan
 
   const doTranslate = async (text: string) => {
     if (!text.trim()) return;
-    setLoading(true);
+    const generation = ++enrichAbort.current; // cancel any in-flight enrich
+    setTranslating(true);
     setSaved(false);
-    try {
-      const tr = await api.translate(text.trim(), langFrom, langTo);
-      const res: TransResult = { original: text.trim(), translation: tr.translation };
-      setResult(res);
+    setResult(null);
 
-      // Enrich only works for English words
-      // source=EN -> enrich source; target=EN -> enrich translation; else skip
+    try {
+      // Step 1: DeepL translate — fast, show immediately
+      const tr = await api.translate(text.trim(), langFrom, langTo);
+      if (generation !== enrichAbort.current) return; // stale
+
+      const res: TransResult = {
+        original: text.trim(),
+        translation: tr.translation,
+        enriching: true, // enrich loading indicator
+      };
+      setResult(res);
+      setTranslating(false); // <-- UI shows translation NOW
+
+      // Step 2: Enrich — slow, non-blocking, updates result when ready
       const enrichWord = langFrom === "en" ? text.trim()
         : langTo === "en" ? tr.translation
         : null;
@@ -57,22 +69,32 @@ export function TranslatePanel({ langFrom, langTo, onChangeLangFrom, onChangeLan
       if (enrichWord) {
         try {
           const enrich = await api.enrich(enrichWord);
+          if (generation !== enrichAbort.current) return; // stale
           setResult((prev) => prev ? {
             ...prev,
             definition: enrich.context || undefined,
             transcription: enrich.transcription || undefined,
             cefr: enrich.cefr || undefined,
             pos: enrich.partOfSpeech || enrich.tag || undefined,
+            enriching: false,
           } : prev);
-        } catch {}
+        } catch {
+          if (generation === enrichAbort.current) {
+            setResult((prev) => prev ? { ...prev, enriching: false } : prev);
+          }
+        }
+      } else {
+        setResult((prev) => prev ? { ...prev, enriching: false } : prev);
       }
     } catch {
-      setResult({ original: text.trim(), translation: "Translation error" });
-    } finally {
-      setLoading(false);
+      if (generation === enrichAbort.current) {
+        setResult({ original: text.trim(), translation: "Translation error" });
+        setTranslating(false);
+      }
     }
   };
 
+  // Auto-translate on debounce
   useEffect(() => {
     if (!input.trim()) { setResult(null); return; }
     if (timerRef.current) clearTimeout(timerRef.current);
@@ -97,11 +119,11 @@ export function TranslatePanel({ langFrom, langTo, onChangeLangFrom, onChangeLan
     setTimeout(() => setSaved(false), 2000);
   };
 
-  // Is the enriched data about the source word or the translation?
   const enrichIsSource = langFrom === "en";
 
   return (
     <div style={{ padding: 12, display: "flex", flexDirection: "column", height: "100%" }}>
+      {/* Language dropdowns */}
       <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 12 }}>
         <LangDropdown value={langFrom} onChange={onChangeLangFrom} />
         <button onClick={swap} style={{
@@ -117,6 +139,7 @@ export function TranslatePanel({ langFrom, langTo, onChangeLangFrom, onChangeLan
         <LangDropdown value={langTo} onChange={onChangeLangTo} />
       </div>
 
+      {/* Input */}
       <div style={{
         display: "flex", gap: 4, marginBottom: 10,
         background: t.bgCard, borderRadius: 8, padding: 3,
@@ -137,34 +160,35 @@ export function TranslatePanel({ langFrom, langTo, onChangeLangFrom, onChangeLan
         }}>{"\u2192"}</button>
       </div>
 
-      {loading && (
+      {/* Translating spinner (only for DeepL phase) */}
+      {translating && (
         <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", color: t.textGhost, fontSize: 12 }}>
           Translating...
         </div>
       )}
 
-      {result && !loading && (
+      {/* Result card — shown as soon as DeepL returns */}
+      {result && !translating && (
         <div style={{
           background: t.bgCard, borderRadius: 10, padding: 14,
           border: `1px solid ${t.border}`, flex: 1,
         }}>
-          {/* Source word + enrich if source is EN */}
-          <div style={{ display: "flex", alignItems: "baseline", gap: 5, marginBottom: 3 }}>
+          {/* Source word + enrich data (if source=EN) */}
+          <div style={{ display: "flex", alignItems: "baseline", gap: 5, marginBottom: 3, flexWrap: "wrap" }}>
             <span style={{ fontSize: 18, fontWeight: 700, color: t.text }}>{result.original}</span>
-            {enrichIsSource && <CefrBadge level={result.cefr as any} />}
+            {enrichIsSource && result.cefr && <CefrBadge level={result.cefr as any} />}
             {enrichIsSource && result.pos && <span style={{ fontSize: 10, color: t.textGhost, fontStyle: "italic" }}>{result.pos}</span>}
+            {enrichIsSource && result.enriching && <span style={{ fontSize: 8, color: t.textGhost, fontStyle: "italic" }}>loading...</span>}
           </div>
           {enrichIsSource && result.transcription && (
-            <div style={{ fontSize: 11, color: t.textDim, marginBottom: 6 }}>
-              {result.transcription}
-            </div>
+            <div style={{ fontSize: 11, color: t.textDim, marginBottom: 6 }}>{result.transcription}</div>
           )}
 
-          {/* Translation with target flag */}
+          {/* Translation */}
           <div style={{ fontSize: 15, color: t.accentText, marginBottom: 2 }}>
             {toLang?.flag} {result.translation}
           </div>
-          {/* If target is EN, show enrich data under translation */}
+          {/* Enrich on translation side (when target=EN) */}
           {!enrichIsSource && result.transcription && (
             <div style={{ fontSize: 10, color: t.textDim, marginBottom: 2 }}>
               {result.transcription}
@@ -172,15 +196,19 @@ export function TranslatePanel({ langFrom, langTo, onChangeLangFrom, onChangeLan
               {result.pos && <span style={{ marginLeft: 4, fontSize: 9, color: t.textGhost, fontStyle: "italic" }}>{result.pos}</span>}
             </div>
           )}
+          {!enrichIsSource && result.enriching && (
+            <div style={{ fontSize: 8, color: t.textGhost, fontStyle: "italic", marginBottom: 2 }}>enriching...</div>
+          )}
 
-          {/* Definition (always English, no flag) */}
+          {/* Definition */}
           {result.definition && (
             <div style={{ fontSize: 11, color: t.textMuted, fontStyle: "italic", marginTop: 4, marginBottom: 14 }}>
               {result.definition}
             </div>
           )}
 
-          <div style={{ display: "flex", gap: 4 }}>
+          {/* Save buttons */}
+          <div style={{ display: "flex", gap: 4, marginTop: result.definition ? 0 : 10 }}>
             <button onClick={handleSave} style={{
               flex: 1, padding: "9px 0", borderRadius: 8,
               background: saved ? t.successBg : t.gradient,
@@ -192,7 +220,8 @@ export function TranslatePanel({ langFrom, langTo, onChangeLangFrom, onChangeLan
         </div>
       )}
 
-      {!result && !loading && (
+      {/* Empty state */}
+      {!result && !translating && (
         <div style={{
           flex: 1, display: "flex", flexDirection: "column",
           alignItems: "center", justifyContent: "center",

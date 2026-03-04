@@ -74,7 +74,6 @@ export function SettingsPanel({ settings, onUpdate }: Props) {
       <div style={card}>
         <Toggle label="Auto-detect language on select" checked={settings.autoDetectLang} onChange={(v) => onUpdate({ autoDetectLang: v })} />
         <Toggle label="Show popup on text selection" checked={settings.showPopupOnSelect} onChange={(v) => onUpdate({ showPopupOnSelect: v })} />
-        <Toggle label="Audio autoplay" checked={settings.audioAutoplay} onChange={(v) => onUpdate({ audioAutoplay: v })} />
         <Toggle label="CEFR hints in popup" checked={settings.cefrHints} onChange={(v) => onUpdate({ cefrHints: v })} last />
       </div>
       <button onClick={handleReset} style={{
