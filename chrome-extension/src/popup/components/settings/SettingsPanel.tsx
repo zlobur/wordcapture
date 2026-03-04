@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
 import { theme as t } from "@/shared/theme";
 import { storage } from "@/shared/storage";
-import { LANGUAGES } from "@/shared/constants";
-import { resetMockData } from "@/popup/stores/dataStore";
+import { V1_LANGUAGES } from "@/shared/constants";
 import { Toggle } from "@/popup/components/ui/Toggle";
 import type { UserSettings, LangCode } from "@/shared/types";
 
@@ -23,12 +22,6 @@ export function SettingsPanel({ settings, onUpdate }: Props) {
     setTimeout(() => setCopied(false), 1500);
   };
 
-  const handleReset = () => {
-    if (confirm("Reset all mock data to defaults? This will clear all your cards, decks, categories, and views.")) {
-      resetMockData();
-    }
-  };
-
   const card: React.CSSProperties = {
     background: t.bgCard, borderRadius: t.radiusLg,
     padding: 14, border: `1px solid ${t.border}`, marginBottom: 12,
@@ -45,7 +38,7 @@ export function SettingsPanel({ settings, onUpdate }: Props) {
             <select value={settings.defaultFromLang}
               onChange={(e) => onUpdate({ defaultFromLang: e.target.value as LangCode })}
               style={{ width: "100%", padding: "6px 8px", background: "rgba(255,255,255,0.05)", border: `1px solid ${t.border}`, borderRadius: 6, color: t.text, fontSize: 12, fontFamily: t.fontFamily, cursor: "pointer", outline: "none" }}>
-              {LANGUAGES.map((l) => <option key={l.code} value={l.code}>{l.flag} {l.name}</option>)}
+                {V1_LANGUAGES.map((l) => <option key={l.code} value={l.code}>{l.flag} {l.name}</option>)}
             </select>
           </div>
           <div style={{ color: t.textDim, fontSize: 14, paddingBottom: 6 }}>→</div>
@@ -54,7 +47,7 @@ export function SettingsPanel({ settings, onUpdate }: Props) {
             <select value={settings.defaultToLang}
               onChange={(e) => onUpdate({ defaultToLang: e.target.value as LangCode })}
               style={{ width: "100%", padding: "6px 8px", background: "rgba(255,255,255,0.05)", border: `1px solid ${t.border}`, borderRadius: 6, color: t.text, fontSize: 12, fontFamily: t.fontFamily, cursor: "pointer", outline: "none" }}>
-              {LANGUAGES.map((l) => <option key={l.code} value={l.code}>{l.flag} {l.name}</option>)}
+                {V1_LANGUAGES.map((l) => <option key={l.code} value={l.code}>{l.flag} {l.name}</option>)}
             </select>
           </div>
         </div>
@@ -76,11 +69,6 @@ export function SettingsPanel({ settings, onUpdate }: Props) {
         <Toggle label="Show popup on text selection" checked={settings.showPopupOnSelect} onChange={(v) => onUpdate({ showPopupOnSelect: v })} />
         <Toggle label="CEFR hints in popup" checked={settings.cefrHints} onChange={(v) => onUpdate({ cefrHints: v })} last />
       </div>
-      <button onClick={handleReset} style={{
-        width: "100%", padding: "8px 0", borderRadius: 6, fontSize: 10,
-        background: t.dangerBg, border: "none", color: t.danger,
-        cursor: "pointer", fontFamily: t.fontFamily,
-      }}>Reset Mock Data</button>
     </div>
   );
 }

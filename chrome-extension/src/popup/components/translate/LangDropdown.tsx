@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { theme as t } from "@/shared/theme";
-import { LANGUAGES } from "@/shared/constants";
+import { V1_LANGUAGES } from "@/shared/constants";
 import type { LangCode } from "@/shared/types";
 
 interface Props {
@@ -11,7 +11,7 @@ interface Props {
 export function LangDropdown({ value, onChange }: Props) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
-  const lang = LANGUAGES.find((l) => l.code === value);
+  const lang = V1_LANGUAGES.find((l) => l.code === value);
 
   useEffect(() => {
     if (!open) return;
@@ -43,7 +43,7 @@ export function LangDropdown({ value, onChange }: Props) {
           borderRadius: 10, padding: 3, boxShadow: "0 10px 30px rgba(0,0,0,0.5)",
           maxHeight: 200, overflow: "auto",
         }}>
-          {LANGUAGES.map((l) => (
+          {V1_LANGUAGES.map((l) => (
             <div key={l.code}
               onClick={() => { onChange(l.code); setOpen(false); }}
               style={{

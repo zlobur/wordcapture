@@ -17,6 +17,8 @@ export const LANGUAGES: Language[] = [
   { code: "ko", label: "KO", flag: "\u{1F1F0}\u{1F1F7}", name: "한국어" },
 ];
 
+export const V1_LANGUAGES: Language[] = LANGUAGES.filter(l => l.code === "en" || l.code === "ru");
+
 export const DEFAULT_SETTINGS: UserSettings = {
   activeLang: "en",
   targetLang: "ru",

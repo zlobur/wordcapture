@@ -7,13 +7,13 @@ interface Props {
   inboxCount: number;
 }
 
-const ITEMS: { id: SectionId; icon: string; label: string; accent?: boolean }[] = [
-  { id: "translate", icon: "⇄", label: "Trans" },
-  { id: "inbox", icon: "📥", label: "Inbox" },
-  { id: "categories", icon: "📂", label: "Cards" },
-  { id: "views", icon: "◈", label: "Views" },
-  { id: "review", icon: "▶", label: "Learn", accent: true },
-  { id: "settings", icon: "⚙", label: "" },
+const ITEMS: { id: SectionId; icon: string; label: string; accent?: boolean; enabled?: boolean }[] = [
+  { id: "translate", icon: "⇄", label: "Trans", enabled: true },
+  { id: "inbox", icon: "📥", label: "Inbox", enabled: false },
+  { id: "categories", icon: "📂", label: "Cards", enabled: false },
+  { id: "views", icon: "◈", label: "Views", enabled: false },
+  { id: "review", icon: "▶", label: "Learn", accent: true, enabled: false },
+  { id: "settings", icon: "⚙", label: "", enabled: true },
 ];
 
 export function SideNav({ activeSection, onSelect, inboxCount }: Props) {
@@ -28,7 +28,7 @@ export function SideNav({ activeSection, onSelect, inboxCount }: Props) {
         display: "flex", alignItems: "center", justifyContent: "center",
         fontSize: 9, fontWeight: 800, color: "#fff", marginBottom: 8,
       }}>Wc</div>
-      {ITEMS.map((item) => (
+      {ITEMS.filter(item => item.enabled).map((item) => (
         <button key={item.id} onClick={() => onSelect(item.id)} title={item.label || item.id}
           style={{
             width: 38, height: 34, borderRadius: 7, border: "none",
