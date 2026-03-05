@@ -1,0 +1,42 @@
+name: Extension Publish
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version (e.g. v1.0.0)'
+        required: true
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: chrome-extension
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: chrome-extension/package-lock.json
+
+      - run: npm ci
+
+      - run: npm test
+
+      - run: npm run build
+
+      - name: Zip extension
+        run: zip -r ../extension-${{ github.event.inputs.version }}.zip dist/
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: extension-${{ github.event.inputs.version }}
+          path: extension-${{ github.event.inputs.version }}.zip
+          retention-days: 90
+
+      - name: Publish to Chrome Web Store
+        run: npx chrome-webstore-upload-cli upload --source dist/ --extension-id ${{ secrets.EXTENSION_ID }} --client-id ${{ secrets.CHROME_CLIENT_ID }} --client-secret ${{ secrets.CHROME_CLIENT_SECRET }} --refresh-token ${{ secrets.CHROME_REFRESH_TOKEN }} --auto-publish
