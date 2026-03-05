@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WordCapture - Capture words. Learn forever.</title>
+<meta name="description" content="Chrome extension for language learners. Select any word, translate instantly, enrich with AI.">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0c0e14;--bg2:#141620;--accent:#38a3ed;--text:#e2e8f0;--dim:#94a3b8;--ghost:#475569;--grad:linear-gradient(135deg,#0078d4,#38a3ed);--font:'DM Sans',system-ui,sans-serif}
+html{scroll-behavior:smooth}
+body{font-family:var(--font);background:var(--bg);color:var(--text);line-height:1.6}
+a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+.c{max-width:960px;margin:0 auto;padding:0 24px}
+nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:16px 0;background:rgba(12,14,20,0.85);backdrop-filter:blur(12px);border-bottom:1px solid rgba(56,163,237,0.08)}
+nav .c{display:flex;align-items:center;justify-content:space-between}
+.logo{font-size:18px;font-weight:800}.logo span{background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+nav ul{list-style:none;display:flex;gap:24px}nav ul a{color:var(--dim);font-size:13px;font-weight:500}nav ul a:hover{color:var(--text);text-decoration:none}
+.hero{padding:140px 0 80px;text-align:center}
+.hero h1{font-size:clamp(36px,5vw,56px);font-weight:800;letter-spacing:-1.5px;line-height:1.1;margin-bottom:16px}
+.hero h1 em{font-style:normal;background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hero p{font-size:18px;color:var(--dim);max-width:520px;margin:0 auto 32px}
+.cta{display:inline-flex;padding:14px 32px;background:var(--grad);color:#fff;border-radius:12px;font-weight:700;font-size:15px;transition:transform 0.2s}
+.cta:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(56,163,237,0.3);text-decoration:none}
+.sub{margin-top:12px;font-size:12px;color:var(--ghost)}
+.s{padding:80px 0}.st{text-align:center;font-size:28px;font-weight:800;margin-bottom:48px}
+.fg{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px}
+.f{background:var(--bg2);border:1px solid rgba(56,163,237,0.08);border-radius:14px;padding:28px 24px}
+.f .i{font-size:28px;margin-bottom:12px}.f h3{font-size:15px;font-weight:700;margin-bottom:6px}.f p{font-size:13px;color:var(--dim)}
+.steps{display:flex;flex-direction:column;gap:24px;max-width:600px;margin:0 auto}
+.step{display:flex;gap:16px}.sn{width:36px;height:36px;border-radius:10px;background:var(--grad);color:#fff;font-weight:800;font-size:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.step h3{font-size:14px;font-weight:700;margin-bottom:2px}.step p{font-size:12px;color:var(--dim)}
+.tg{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;margin-top:32px}
+.t{background:var(--bg2);border:1px solid rgba(56,163,237,0.08);border-radius:8px;padding:8px 16px;font-size:12px;font-weight:600;color:var(--dim)}
+.coming{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;max-width:700px;margin:0 auto}
+.ci{background:var(--bg2);border:1px solid rgba(56,163,237,0.06);border-radius:10px;padding:14px 18px;display:flex;align-items:center;gap:10px}
+.ci-dot{width:6px;height:6px;border-radius:50%;background:var(--grad);flex-shrink:0;border-radius:50%}
+.ci span{font-size:13px;color:var(--dim)}
+.coming-note{text-align:center;font-size:12px;color:var(--ghost);margin-top:24px}
+.pc{background:var(--bg2);border:1px solid rgba(56,163,237,0.08);border-radius:14px;padding:32px;font-size:13px;color:var(--dim);line-height:1.8}
+.pc h3{font-size:14px;color:var(--text);font-weight:700;margin:16px 0 4px}.pc h3:first-child{margin-top:0}
+footer{padding:40px 0;border-top:1px solid rgba(56,163,237,0.08);text-align:center}
+.fl{display:flex;justify-content:center;gap:24px;margin-bottom:16px;flex-wrap:wrap}.fl a{color:var(--dim);font-size:13px}
+.cp{font-size:11px;color:var(--ghost)}
+.author{font-size:12px;color:var(--ghost);margin-bottom:10px}
+.author a{color:var(--dim)}
+@media(max-width:640px){nav ul{gap:14px}.fg{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<nav><div class="c">
+  <div class="logo"><span>Wc</span> WordCapture</div>
+  <ul>
+    <li><a href="#features">Features</a></li>
+    <li><a href="#how">How it works</a></li>
+    <li><a href="#coming">Coming soon</a></li>
+    <li><a href="#privacy">Privacy</a></li>
+    <li><a href="https://github.com/zlobur/wordcapture">GitHub</a></li>
+  </ul>
+</div></nav>
+
+<section class="hero"><div class="c">
+  <h1>Capture words.<br><em>Learn forever.</em></h1>
+  <p>Select any word on any page. Translate instantly. Enrich with AI. All inside your browser — no tab switching, no friction.</p>
+  <a href="#install" class="cta">Add to Chrome</a>
+  <div class="sub">Free · No account required</div>
+</div></section>
+
+<section class="s" id="features"><div class="c">
+  <h2 class="st">Built for language learners</h2>
+  <div class="fg">
+    <div class="f"><div class="i">⇄</div><h3>Instant translation</h3><p>Select any word on any website. Translation appears in milliseconds. English ↔ Russian in v1.0.</p></div>
+    <div class="f"><div class="i">🧠</div><h3>AI enrichment</h3><p>CEFR level, transcription, part of speech, example context. Not just a translation — the full picture.</p></div>
+    <div class="f"><div class="i">🌐</div><h3>Works everywhere</h3><p>Articles, docs, social media, PDFs. If it's a webpage, WordCapture works on it.</p></div>
+    <div class="f"><div class="i">⚙</div><h3>Your preferences</h3><p>Set default translation direction. Auto-detect language. CEFR hints on or off. Your extension, your rules.</p></div>
+  </div>
+</div></section>
+
+<section class="s" id="how"><div class="c">
+  <h2 class="st">How it works</h2>
+  <div class="steps">
+    <div class="step"><div class="sn">1</div><div><h3>Select a word</h3><p>Highlight any word on a page. The Wc badge appears instantly.</p></div></div>
+    <div class="step"><div class="sn">2</div><div><h3>See the translation</h3><p>Click the badge. Translation, transcription, and CEFR level appear in the popup.</p></div></div>
+    <div class="step"><div class="sn">3</div><div><h3>Save to your collection</h3><p>Hit Save. The word goes to your inbox for later review.</p></div></div>
+  </div>
+</div></section>
+
+<section class="s" id="coming"><div class="c">
+  <h2 class="st">Coming soon</h2>
+  <div class="coming">
+    <div class="ci"><div class="ci-dot"></div><span>Vocabulary cards &amp; inbox</span></div>
+    <div class="ci"><div class="ci-dot"></div><span>Decks &amp; categories</span></div>
+    <div class="ci"><div class="ci-dot"></div><span>Tags &amp; tag navigation</span></div>
+    <div class="ci"><div class="ci-dot"></div><span>Smart search</span></div>
+    <div class="ci"><div class="ci-dot"></div><span>Spaced repetition</span></div>
+    <div class="ci"><div class="ci-dot"></div><span>More languages</span></div>
+    <div class="ci"><div class="ci-dot"></div><span>Contextual learning</span></div>
+  </div>
+  <div class="coming-note">v1.0 is just the beginning.</div>
+</div></section>
+
+<section class="s" id="stack"><div class="c">
+  <h2 class="st">Built with</h2>
+  <div class="tg">
+    <div class="t">TypeScript</div>
+    <div class="t">React 19</div>
+    <div class="t">Vite</div>
+    <div class="t">Chrome MV3</div>
+    <div class="t">.NET 9</div>
+    <div class="t">Kubernetes</div>
+    <div class="t">Hetzner</div>
+    <div class="t">Grafana</div>
+  </div>
+</div></section>
+
+<section class="s" id="privacy"><div class="c">
+  <h2 class="st">Privacy Policy</h2>
+  <div class="pc">
+    <h3>Data collected</h3>Your saved words and settings are stored locally in your browser via Chrome storage API. Words you translate are sent to our backend for processing.
+    <h3>Not collected</h3>No browsing history, no personal information, no analytics linked to you. We don't track which pages you visit.
+    <h3>Third parties</h3>Translation and AI enrichment are handled by our own backend. Only the word you translate is sent — never the surrounding page content.
+    <h3>Storage</h3>All vocabulary data is local to your browser. Uninstalling the extension removes all stored data.
+    <h3>Contact</h3><a href="mailto:kozhdev@gmail.com">kozhdev@gmail.com</a>
+  </div>
+</div></section>
+
+<footer><div class="c">
+  <div class="fl">
+    <a href="https://github.com/zlobur/wordcapture">GitHub</a>
+    <a href="https://kozh.dev">kozh.dev</a>
+    <a href="mailto:kozhdev@gmail.com">kozhdev@gmail.com</a>
+    <a href="#privacy">Privacy</a>
+  </div>
+  <div class="author">Built by <a href="https://kozh.dev">Pavel Kozhevnikov</a></div>
+  <div class="cp">© 2025 Pavel Kozhevnikov.</div>
+</div></footer>
+
+</body>
+</html>
