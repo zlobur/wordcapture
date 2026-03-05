@@ -32,7 +32,7 @@ jobs:
       - run: npm run build
 
       - name: Zip extension
-        run: zip -r ../extension-${{ github.event.inputs.version }}.zip dist/
+        run: cd dist && zip -r ../../extension-${{ github.event.inputs.version }}.zip .
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
