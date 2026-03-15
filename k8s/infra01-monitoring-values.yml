@@ -1,0 +1,38 @@
+prometheus:
+  prometheusSpec:
+    additionalScrapeConfigs:
+      - job_name: "infra01-node"
+        static_configs:
+          - targets: ["10.0.0.4:9100"]
+            labels:
+              instance: "infra01"
+
+      - job_name: "infra01-redis"
+        static_configs:
+          - targets: ["10.0.0.4:9121"]
+            labels:
+              instance: "infra01"
+
+      - job_name: "infra01-postgres"
+        static_configs:
+          - targets: ["10.0.0.4:9187"]
+            labels:
+              instance: "infra01"
+
+      - job_name: "infra01-mongodb"
+        static_configs:
+          - targets: ["10.0.0.4:9216"]
+            labels:
+              instance: "infra01"
+
+      - job_name: "infra01-rabbitmq"
+        static_configs:
+          - targets: ["10.0.0.4:15692"]
+            labels:
+              instance: "infra01"
+
+      - job_name: "infra01-kafka"
+        static_configs:
+          - targets: ["10.0.0.4:9308"]
+            labels:
+              instance: "infra01"
