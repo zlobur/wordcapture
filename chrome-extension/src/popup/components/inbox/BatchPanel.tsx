@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { theme as t } from "@/shared/theme";
 import { LANGUAGES } from "@/shared/constants";
-import { useCards, useDecks, autoTranslatePending } from "@/popup/stores/dataStore";
+import { useCards, useDecks } from "@/popup/stores/dataStore";
 import { LangDropdown } from "@/popup/components/translate/LangDropdown";
 import { TagPill } from "@/popup/components/shared/TagPill";
 import type { LangCode } from "@/shared/types";
@@ -68,7 +68,6 @@ export function BatchPanel({ onBack, langFrom: initFrom, langTo: initTo }: Props
     setWords([]);
     setInput("");
     onBack();
-    setTimeout(() => autoTranslatePending(), 300);
   };
 
   const targetLabel = target === "inbox" ? "Inbox" : target === "new" ? (deckName || "New Deck") : decks.find((d) => d.id === target)?.name || target;

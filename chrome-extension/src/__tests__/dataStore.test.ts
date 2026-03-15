@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import { renderHook, act } from "@testing-library/react";
 
 let useCards: any, useDecks: any, useCategories: any, useViews: any;
-let importPendingInbox: any, resetMockData: any, autoTranslatePending: any;
+let resetMockData: any, initStore: any;
 
 async function loadStore() {
   vi.resetModules();
@@ -11,15 +11,14 @@ async function loadStore() {
   useDecks = mod.useDecks;
   useCategories = mod.useCategories;
   useViews = mod.useViews;
-  importPendingInbox = mod.importPendingInbox;
   resetMockData = mod.resetMockData;
-  autoTranslatePending = mod.autoTranslatePending;
+  initStore = mod.initStore;
+  await mod.initStore();
 }
 
 describe("dataStore", () => {
   beforeEach(async () => { await loadStore(); });
 
-  // ─── INBOX ─────────────────────────────
   describe("Inbox cards", () => {
     it("initializes with mock inbox cards (deckId=null)", () => {
       const { result } = renderHook(() => useCards());
@@ -68,7 +67,6 @@ describe("dataStore", () => {
     });
   });
 
-  // ─── CARD EDIT ─────────────────────────
   describe("Card editing", () => {
     it("updates original (fix typo)", () => {
       const { result } = renderHook(() => useCards());
@@ -94,7 +92,6 @@ describe("dataStore", () => {
     });
   });
 
-  // ─── TAGS ──────────────────────────────
   describe("Card tags", () => {
     it("adds tags to a card", () => {
       const { result } = renderHook(() => useCards());
@@ -152,7 +149,6 @@ describe("dataStore", () => {
     });
   });
 
-  // ─── LINKS ─────────────────────────────
   describe("Card links", () => {
     it("adds a link to a card", () => {
       const { result } = renderHook(() => useCards());
@@ -195,7 +191,6 @@ describe("dataStore", () => {
     });
   });
 
-  // ─── CONTEXTS ──────────────────────────
   describe("Card contexts", () => {
     it("adds a context sentence", () => {
       const { result } = renderHook(() => useCards());
@@ -237,7 +232,6 @@ describe("dataStore", () => {
     });
   });
 
-  // ─── MOVE TO DECK ──────────────────────
   describe("Move cards", () => {
     it("moves inbox cards to a deck", () => {
       const { result } = renderHook(() => useCards());
@@ -254,7 +248,6 @@ describe("dataStore", () => {
     });
   });
 
-  // ─── DECKS ─────────────────────────────
   describe("Decks", () => {
     it("adds a deck to a category", () => {
       const { result } = renderHook(() => useDecks());
@@ -276,7 +269,6 @@ describe("dataStore", () => {
     });
   });
 
-  // ─── CATEGORIES ────────────────────────
   describe("Categories", () => {
     it("creates a language category", () => {
       const { result } = renderHook(() => useCategories());
@@ -311,7 +303,6 @@ describe("dataStore", () => {
     });
   });
 
-  // ─── VIEWS ─────────────────────────────
   describe("Views", () => {
     it("filters by tag", () => {
       const { result } = renderHook(() => useViews());
@@ -328,67 +319,36 @@ describe("dataStore", () => {
     });
   });
 
-  // ─── BRIDGE: CONTENT SCRIPT → INBOX ────
-  describe("Content script bridge", () => {
-    it("imports pending cards from chrome.storage", async () => {
-      const orig = (globalThis as any).chrome.runtime.sendMessage;
-      (globalThis as any).chrome.runtime.sendMessage = (msg: any, cb: any) => {
-        if (msg.type === "getPendingInbox") {
-          cb({ success: true, cards: [
-            { id: "p1", original: "hello", translation: "привет", sourceLang: "en", targetLang: "ru", createdAt: new Date().toISOString() },
-            { id: "p2", original: "world", translation: "мир", sourceLang: "en", targetLang: "ru", createdAt: new Date().toISOString() },
-          ]});
-        } else { cb?.({ success: true }); }
-      };
-      const count = await importPendingInbox();
-      expect(count).toBe(2);
-      (globalThis as any).chrome.runtime.sendMessage = orig;
-
-      // Verify cards are in inbox
-      const { result } = renderHook(() => useCards());
-      expect(result.current.inbox.some((c: any) => c.original === "hello")).toBe(true);
-      expect(result.current.inbox.some((c: any) => c.original === "world")).toBe(true);
-    });
-
-    it("does not duplicate already-imported cards", async () => {
-      const orig = (globalThis as any).chrome.runtime.sendMessage;
-      (globalThis as any).chrome.runtime.sendMessage = (msg: any, cb: any) => {
-        if (msg.type === "getPendingInbox") {
-          cb({ success: true, cards: [
-            { id: "dup1", original: "test", translation: "t", sourceLang: "en", targetLang: "ru", createdAt: new Date().toISOString() },
-          ]});
-        } else { cb?.({ success: true }); }
-      };
-      await importPendingInbox();
-      const count2 = await importPendingInbox();
-      expect(count2).toBe(0); // Already imported
-      (globalThis as any).chrome.runtime.sendMessage = orig;
-    });
-  });
-
-  // ─── PERSISTENCE ───────────────────────
-  describe("Persistence", () => {
-    it("persists cards to localStorage", () => {
+  describe("Persistence (chrome.storage.local)", () => {
+    it("persists cards to chrome.storage.local", () => {
       const { result } = renderHook(() => useCards());
       act(() => {
         result.current.add({ original: "persist", translation: "x", sourceLang: "en", targetLang: "ru", deckId: null });
       });
-      const raw = localStorage.getItem("wc2:cards");
-      expect(raw).toBeTruthy();
-      expect(JSON.parse(raw!).some((c: any) => c.original === "persist")).toBe(true);
+      return new Promise<void>((resolve) => {
+        chrome.storage.local.get("wc2:cards", (data: any) => {
+          expect(data["wc2:cards"]).toBeTruthy();
+          expect(data["wc2:cards"].some((c: any) => c.original === "persist")).toBe(true);
+          resolve();
+        });
+      });
     });
 
-    it("popup state (section, langs) persists to localStorage", () => {
-      const KEY = "wc2:popupState";
-      localStorage.setItem(KEY, JSON.stringify({ section: "inbox", langFrom: "de", langTo: "ru" }));
-      const state = JSON.parse(localStorage.getItem(KEY)!);
-      expect(state.section).toBe("inbox");
-      expect(state.langFrom).toBe("de");
-      expect(state.langTo).toBe("ru");
+    it("popup state persists via savePopupState", async () => {
+      const mod = await import("@/popup/stores/dataStore");
+      mod.savePopupState("inbox", "de", "ru");
+      return new Promise<void>((resolve) => {
+        chrome.storage.local.get("wc2:popupState", (data: any) => {
+          expect(data["wc2:popupState"]).toBeTruthy();
+          expect(data["wc2:popupState"].section).toBe("inbox");
+          expect(data["wc2:popupState"].langFrom).toBe("de");
+          expect(data["wc2:popupState"].langTo).toBe("ru");
+          resolve();
+        });
+      });
     });
   });
 
-  // ─── RESET ─────────────────────────────
   describe("Reset", () => {
     it("restores defaults", () => {
       const { result } = renderHook(() => useCards());
@@ -399,17 +359,14 @@ describe("dataStore", () => {
     });
   });
 
-  // ─── TRANSLATE DISPLAY LOGIC ──────────
   describe("Translate display logic (unit)", () => {
     it("enrich data goes on source word when source=EN", () => {
-      // When langFrom=en, enrich data (CEFR, transcription, pos) belongs to the source word
       const langFrom = "en", langTo = "ru";
       const enrichIsSource = langFrom === "en";
       expect(enrichIsSource).toBe(true);
     });
 
     it("enrich data goes on translation when target=EN", () => {
-      // When langFrom=ru, langTo=en, enrich data belongs to the translation
       const langFrom = "ru", langTo = "en";
       const enrichIsSource = langFrom === "en";
       expect(enrichIsSource).toBe(false);
@@ -422,7 +379,6 @@ describe("dataStore", () => {
     });
   });
 
-  // --- REVIEW / DUE COUNT ---
   describe("Review due count", () => {
     it("new card in deck counts as due (nextReviewAt=null)", () => {
       const { result } = renderHook(() => useCards());
@@ -489,12 +445,7 @@ describe("dataStore", () => {
           sourceLang: "en", targetLang: "ru", deckId: null,
         });
       });
-      // getDueCountTotal only counts cards with deckId !== null
       const total = result.current.getDueCountTotal();
-      const inboxDue = result.current.inbox.filter((c: any) =>
-        c.srs.nextReviewAt === null || c.srs.nextReviewAt <= new Date().toISOString()
-      );
-      // inbox cards should not be in total
       expect(total).toBe(
         result.current.cards.filter((c: any) =>
           c.deckId !== null && (c.srs.nextReviewAt === null || c.srs.nextReviewAt <= new Date().toISOString())
@@ -527,5 +478,4 @@ describe("dataStore", () => {
       expect(card.srs.repetitions).toBe(2);
     });
   });
-
 });

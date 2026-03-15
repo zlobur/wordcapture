@@ -1,3 +1,9 @@
+import { initSentry } from "@/shared/sentry";
+initSentry("content");
+
+import { detectScript, detectLangSimple, resolveDirection, escapeHtml } from "./utils";
+import type { LangSettings } from "./utils";
+
 const C = {
   bg:          "#1e1e2e",
   border:      "rgba(56,163,237,0.3)",
@@ -24,13 +30,19 @@ let currentBadge: HTMLElement | null = null;
 let currentPopup: HTMLElement | null = null;
 let selectedWord: string = "";
 let selectedRange: Range | null = null;
+let showPopupOnSelect: boolean = true;
 
-interface LangSettings {
-  activeLang: string;
-  targetLang: string;
-  defaultFromLang: string;
-  defaultToLang: string;
-}
+chrome.storage.local.get("settings", (data) => {
+  const s = data.settings || {};
+  if (s.showPopupOnSelect === false) showPopupOnSelect = false;
+});
+
+chrome.storage.local.onChanged.addListener((changes) => {
+  if (changes.settings?.newValue) {
+    const s = changes.settings.newValue as Record<string, unknown>;
+    showPopupOnSelect = s.showPopupOnSelect !== false;
+  }
+});
 
 function getSettings(): Promise<LangSettings> {
   return new Promise((resolve) => {
@@ -46,59 +58,11 @@ function getSettings(): Promise<LangSettings> {
   });
 }
 
-function detectScript(text: string): "cyrillic" | "cjk" | "latin" {
-  let cyrillic = 0;
-  let cjk = 0;
-  let total = 0;
-  for (const char of text) {
-    const code = char.codePointAt(0)!;
-    if (code < 0x40) continue;
-    total++;
-    if (code >= 0x0400 && code <= 0x04FF) cyrillic++;
-    else if (
-      (code >= 0x3040 && code <= 0x30FF) ||
-      (code >= 0x4E00 && code <= 0x9FFF) ||
-      (code >= 0xFF00 && code <= 0xFFEF)
-    ) cjk++;
-  }
-  if (total === 0) return "latin";
-  if (cyrillic / total > 0.3) return "cyrillic";
-  if (cjk / total > 0.2) return "cjk";
-  return "latin";
-}
-
-function detectLangSimple(text: string): string {
-  const script = detectScript(text);
-  if (script === "cyrillic") return "ru";
-  if (script === "cjk") return "ja";
-  return "en";
-}
-
-function resolveDirection(text: string, settings: LangSettings): { from: string; to: string } {
-  const detected = detectLangSimple(text);
-  let from = settings.activeLang;
-  let to = settings.targetLang;
-
-  if (detected === from) {
-    return { from, to };
-  }
-
-  if (detected === to) {
-    return { from: to, to: from };
-  }
-
-  from = detected;
-  if (from === to) {
-    to = settings.defaultToLang;
-    if (from === to) to = "ru";
-  }
-  return { from, to };
-}
-
 document.addEventListener("mouseup", (e) => {
   const target = e.target as Node;
   if (currentBadge?.contains(target) || currentPopup?.contains(target)) return;
   removeBadge();
+  if (!showPopupOnSelect) return;
 
   const selection = window.getSelection();
   const word = selection?.toString().trim();
@@ -339,12 +303,6 @@ function removeBadge() {
 function removePopup() {
   currentPopup?.remove();
   currentPopup = null;
-}
-
-function escapeHtml(str: string): string {
-  const div = document.createElement("div");
-  div.textContent = str;
-  return div.innerHTML;
 }
 
 console.log("WordCapture content script loaded");

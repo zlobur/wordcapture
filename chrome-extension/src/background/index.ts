@@ -1,11 +1,23 @@
-const API_BASE = "https://wordcapture.app.zlobur.com";
-const CARD_STORAGE_KEY = "wc:cardStore";
-const PENDING_INBOX_KEY = "wc2:pendingInbox";
+import { initSentry } from "@/shared/sentry";
+initSentry("background");
 
-chrome.runtime.onInstalled.addListener(() => {
+const API_BASE = "https://wordcapture.app.zlobur.com";
+const CARDS_KEY = "wc2:cards";
+
+chrome.runtime.onInstalled.addListener((details) => {
   chrome.storage.local.get("extensionId", (data) => {
+    const extensionId = data.extensionId || crypto.randomUUID();
     if (!data.extensionId) {
-      chrome.storage.local.set({ extensionId: crypto.randomUUID() });
+      chrome.storage.local.set({ extensionId });
+    }
+    const version = chrome.runtime.getManifest().version;
+    const event = details.reason === "install" ? "install" : details.reason === "update" ? "update" : null;
+    if (event) {
+      fetch(`${API_BASE}/analytics/event`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-Extension-Id": extensionId },
+        body: JSON.stringify({ event, version, previousVersion: details.previousVersion || null }),
+      }).catch(() => {});
     }
   });
 });
@@ -40,44 +52,28 @@ function uid(): string {
   return crypto.randomUUID().slice(0, 8);
 }
 
-interface CardStoreData {
-  boxes: Array<{ id: string; name: string; createdAt: string }>;
-  folders: Array<{ id: string; name: string; boxId: string; createdAt: string }>;
-  decks: Array<{ id: string; name: string; folderId: string; cards: Array<Record<string, unknown>>; createdAt: string }>;
+interface CardData {
+  id: string;
+  original: string;
+  translation: string;
+  definition?: string;
+  transcription?: string;
+  cefr?: string;
+  partOfSpeech?: string;
+  tags: string[];
+  deckId: string | null;
+  sourceLang: string;
+  targetLang: string;
+  notes: string;
+  links: Array<{ url: string; title: string }>;
+  contexts: Array<{ sentence: string; source?: string }>;
+  srs: { interval: number; easeFactor: number; repetitions: number; nextReviewAt: null; lastReviewedAt: null };
+  createdAt: string;
+  sourceUrl?: string;
+  sourceDomain?: string;
 }
 
-async function saveCardLocally(original: string, translation: string, sourceLang: string, targetLang: string): Promise<void> {
-  return new Promise((resolve) => {
-    chrome.storage.local.get(CARD_STORAGE_KEY, (data) => {
-      const store: CardStoreData = data[CARD_STORAGE_KEY] || {
-        boxes: [{ id: "unsorted-box", name: "My Words", createdAt: new Date().toISOString() }],
-        folders: [{ id: "unsorted-folder", name: "General", boxId: "unsorted-box", createdAt: new Date().toISOString() }],
-        decks: [{ id: "unsorted", name: "Unsorted", folderId: "unsorted-folder", cards: [], createdAt: new Date().toISOString() }],
-      };
-
-      let unsortedDeck = store.decks.find((d) => d.id === "unsorted");
-      if (!unsortedDeck) {
-        unsortedDeck = { id: "unsorted", name: "Unsorted", folderId: "unsorted-folder", cards: [], createdAt: new Date().toISOString() };
-        store.decks.push(unsortedDeck);
-      }
-
-      unsortedDeck.cards.unshift({
-        id: uid(),
-        word: original,
-        translation: translation,
-        transcription: "",
-        fromLang: sourceLang || "en",
-        toLang: targetLang || "ru",
-        createdAt: new Date().toISOString(),
-      });
-
-      chrome.storage.local.set({ [CARD_STORAGE_KEY]: store }, resolve);
-    });
-  });
-}
-
-/** Bridge: also push to wc2 pending inbox for the new popup to pick up */
-async function pushToPendingInbox(
+async function saveCardToStore(
   original: string,
   translation: string,
   sourceLang: string,
@@ -85,19 +81,28 @@ async function pushToPendingInbox(
   sourceUrl?: string
 ): Promise<void> {
   return new Promise((resolve) => {
-    chrome.storage.local.get(PENDING_INBOX_KEY, (data) => {
-      const pending: Array<Record<string, unknown>> = data[PENDING_INBOX_KEY] || [];
-      pending.push({
+    chrome.storage.local.get(CARDS_KEY, (data) => {
+      const cards: CardData[] = data[CARDS_KEY] || [];
+      const card: CardData = {
         id: uid(),
         original,
         translation,
+        tags: [],
+        deckId: null,
         sourceLang: sourceLang || "en",
         targetLang: targetLang || "ru",
-        sourceUrl: sourceUrl || "",
-        sourceDomain: sourceUrl ? new URL(sourceUrl).hostname : "",
+        notes: "",
+        links: [],
+        contexts: sourceUrl
+          ? [{ sentence: `Saved from ${sourceUrl ? new URL(sourceUrl).hostname : ""}`, source: sourceUrl ? new URL(sourceUrl).hostname : "" }]
+          : [],
+        srs: { interval: 1, easeFactor: 2.5, repetitions: 0, nextReviewAt: null, lastReviewedAt: null },
         createdAt: new Date().toISOString(),
-      });
-      chrome.storage.local.set({ [PENDING_INBOX_KEY]: pending }, resolve);
+        sourceUrl: sourceUrl || undefined,
+        sourceDomain: sourceUrl ? new URL(sourceUrl).hostname : undefined,
+      };
+      cards.unshift(card);
+      chrome.storage.local.set({ [CARDS_KEY]: cards }, resolve);
     });
   });
 }
@@ -125,10 +130,7 @@ chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
     const sourceLang = request.sourceLang || "en";
     const targetLang = request.targetLang || "ru";
 
-    Promise.all([
-      saveCardLocally(request.original, request.translation, sourceLang, targetLang),
-      pushToPendingInbox(request.original, request.translation, sourceLang, targetLang, request.sourceUrl),
-    ])
+    saveCardToStore(request.original, request.translation, sourceLang, targetLang, request.sourceUrl)
       .then(() => {
         const params = new URLSearchParams({
           original: request.original,
@@ -148,22 +150,6 @@ chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
     apiRequest("/cards", "GET")
       .then((result) => sendResponse({ success: true, result }))
       .catch((err) => sendResponse({ success: false, error: err.message }));
-    return true;
-  }
-
-  // Bridge: popup requests to clear pending inbox after import
-  if (request.type === "clearPendingInbox") {
-    chrome.storage.local.set({ [PENDING_INBOX_KEY]: [] }, () => {
-      sendResponse({ success: true });
-    });
-    return true;
-  }
-
-  // Bridge: popup requests pending inbox cards
-  if (request.type === "getPendingInbox") {
-    chrome.storage.local.get(PENDING_INBOX_KEY, (data) => {
-      sendResponse({ success: true, cards: data[PENDING_INBOX_KEY] || [] });
-    });
     return true;
   }
 });

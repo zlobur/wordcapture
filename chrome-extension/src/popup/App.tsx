@@ -1,7 +1,7 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { theme as t } from "@/shared/theme";
 import { useSettings } from "@/hooks/useSettings";
-import { useCards, importPendingInbox, autoTranslatePending } from "@/popup/stores/dataStore";
+import { useCards, initStore, loadPopupStateAsync, savePopupState } from "@/popup/stores/dataStore";
 import { useLayerStack } from "@/popup/hooks/useLayerStack";
 import type { SectionId } from "@/shared/constants";
 import type { LangCode, Category, Deck, Card, SavedView } from "@/shared/types";
@@ -21,48 +21,44 @@ import { ReviewPanel } from "./components/review/ReviewPanel";
 import { SettingsPanel } from "./components/settings/SettingsPanel";
 import { Layer } from "./components/Layer";
 
-// Persist popup state across close/reopen
-const STATE_KEY = "wc2:popupState";
-function loadPopupState(): { section: SectionId; langFrom: LangCode; langTo: LangCode } | null {
-  try { const s = localStorage.getItem(STATE_KEY); return s ? JSON.parse(s) : null; } catch { return null; }
-}
-function savePopupState(section: SectionId, langFrom: LangCode, langTo: LangCode) {
-  localStorage.setItem(STATE_KEY, JSON.stringify({ section, langFrom, langTo }));
-}
-
 export function App() {
-  const { settings, update: updateSettings, loading } = useSettings();
+  const { settings, update: updateSettings, loading: settingsLoading } = useSettings();
   const { inbox } = useCards();
   const { layers, push, pop, clear } = useLayerStack();
 
-  const saved = loadPopupState();
-  const [section, setSection] = useState<SectionId>(saved?.section || "translate");
-  const [langFrom, setLangFrom] = useState<LangCode>(saved?.langFrom || "en");
-  const [langTo, setLangTo] = useState<LangCode>(saved?.langTo || "ru");
-  const [settingsApplied, setSettingsApplied] = useState(!!saved);
+  const [storeReady, setStoreReady] = useState(false);
+  const [section, setSection] = useState<SectionId>("translate");
+  const [langFrom, setLangFrom] = useState<LangCode>("en");
+  const [langTo, setLangTo] = useState<LangCode>("ru");
+  const [settingsApplied, setSettingsApplied] = useState(false);
 
-  // Apply settings once loaded (only if no saved popup state)
   useEffect(() => {
-    if (!loading && !settingsApplied) {
+    initStore()
+      .then(() => loadPopupStateAsync())
+      .then((saved) => {
+        if (saved) {
+          setSection(saved.section as SectionId);
+          setLangFrom(saved.langFrom);
+          setLangTo(saved.langTo);
+          setSettingsApplied(true);
+        }
+        setStoreReady(true);
+      });
+  }, []);
+
+  useEffect(() => {
+    if (!settingsLoading && !settingsApplied) {
       setLangFrom(settings.defaultFromLang || settings.activeLang || "en");
       setLangTo(settings.defaultToLang || settings.targetLang || "ru");
       setSettingsApplied(true);
     }
-  }, [loading, settings, settingsApplied]);
+  }, [settingsLoading, settings, settingsApplied]);
 
-  // Save state on every change
-  useEffect(() => { savePopupState(section, langFrom, langTo); }, [section, langFrom, langTo]);
-
-  // On popup open: import pending + auto-translate
   useEffect(() => {
-    importPendingInbox().then((count) => {
-      if (count > 0) console.log(`[WC] Imported ${count} cards from content script`);
-    });
-    const timer = setTimeout(() => autoTranslatePending(), 500);
-    return () => clearTimeout(timer);
-  }, []);
+    if (storeReady) savePopupState(section, langFrom, langTo);
+  }, [section, langFrom, langTo, storeReady]);
 
-  if (loading) {
+  if (settingsLoading || !storeReady) {
     return (
       <div style={{ width: t.popupWidth, height: t.popupHeight, background: t.bg, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: t.fontFamily, color: t.textDim }}>Loading...</div>
     );
@@ -96,7 +92,7 @@ export function App() {
       case "categorySettings": return <CategorySettingsLayer key={i} onBack={pop} />;
       case "deckCards": return <DeckCardsLayer key={i} deck={layer.data.deck as Deck} category={layer.data.category as Category} onSelectCard={(c: Card) => push("cardDetail", c)} onBack={pop} />;
       case "cardDetail": return <CardDetailLayer key={i} card={layer.data as Card} onBack={pop} />;
-      case "viewDetail": return <ViewDetailLayer key={i} view={layer.data as SavedView | null} onBack={pop} />;
+      case "viewDetail": return <ViewDetailLayer key={i} view={layer.data as SavedView | null} onBack={pop} onSelectCard={(c: Card) => push("cardDetail", c)} />;
       default: return null;
     }
   });
