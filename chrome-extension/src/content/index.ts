@@ -1,6 +1,3 @@
-import { initSentry } from "@/shared/sentry";
-initSentry("content");
-
 import { detectScript, detectLangSimple, resolveDirection, escapeHtml } from "./utils";
 import type { LangSettings } from "./utils";
 
