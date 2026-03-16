@@ -42,9 +42,9 @@ app.MapPost("/enrich", async (string word, EnrichHandler handler) =>
     return await handler.Enrich(word);
 });
 
-app.MapPost("/translate", async (string text, TranslateHandler handler) =>
+app.MapPost("/translate", async (string text, string? sourceLang, string? targetLang, TranslateHandler handler) =>
 {
-    return await handler.Translate(text);
+    return await handler.Translate(text, sourceLang, targetLang);
 });
 
 app.MapPost("/bot/webhook", async (HttpRequest request, TelegramBotHandler handler) =>

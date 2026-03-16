@@ -1,4 +1,4 @@
-export type LangCode = "en" | "ru" | "de" | "el" | "fr" | "es" | "it" | "tr" | "pt" | "zh" | "ja" | "ko";
+export type LangCode = "en" | "ru" | "de" | "el" | "fr" | "es" | "it" | "tr" | "pt" | "zh" | "ja" | "ko" | "ar" | "pl" | "nl" | "uk" | "sv";
 
 export interface Language {
   code: LangCode;
@@ -102,10 +102,7 @@ export interface UserSettings {
   targetLang: LangCode;
   defaultFromLang: LangCode;
   defaultToLang: LangCode;
-  autoDetectLang: boolean;
   showPopupOnSelect: boolean;
-  audioAutoplay: boolean;
-  cefrHints: boolean;
 }
 
 export type MessageType =

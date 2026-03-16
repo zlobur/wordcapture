@@ -3,6 +3,7 @@ import { useCards } from "@/popup/stores/dataStore";
 import { Layer } from "@/popup/components/Layer";
 import { CefrBadge } from "@/popup/components/shared/CefrBadge";
 import { TagPill } from "@/popup/components/shared/TagPill";
+import { SearchInput, useCardSearch } from "@/popup/components/shared/SearchInput";
 import type { Category, Deck, Card } from "@/shared/types";
 
 interface Props {
@@ -16,6 +17,7 @@ export function DeckCardsLayer({ deck, category, onSelectCard, onBack }: Props) 
   const { getByDeck, getDueCount } = useCards();
   const cards = getByDeck(deck.id);
   const dueCount = getDueCount(deck.id);
+  const { query, setQuery, filtered, matchCount } = useCardSearch(cards);
 
   return (
     <Layer depth={2} edgeLabel={`← ${deck.name}`} edgeColor={`${category?.color || t.accent}18`} onBack={onBack}>
@@ -25,6 +27,9 @@ export function DeckCardsLayer({ deck, category, onSelectCard, onBack }: Props) 
           <span style={{ color: t.text, fontWeight: 700, fontSize: 13 }}>{deck.name}</span>
           <span style={{ fontSize: 9, color: t.textGhost, marginLeft: "auto" }}>{cards.length}</span>
         </div>
+        {cards.length > 0 && (
+          <SearchInput query={query} onChange={setQuery} matchCount={matchCount} placeholder="Search deck..." />
+        )}
         {dueCount > 0 && (
           <button onClick={() => alert("Review coming in Stage 4")} style={{
             width: "100%", padding: "7px 0", marginBottom: 6, borderRadius: 7,
@@ -32,7 +37,7 @@ export function DeckCardsLayer({ deck, category, onSelectCard, onBack }: Props) 
             fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: t.fontFamily,
           }}>▶ Review {dueCount}</button>
         )}
-        {cards.map((card) => (
+        {filtered.map((card) => (
           <div key={card.id} onClick={() => onSelectCard(card)}
             style={{
               padding: "6px 7px", marginBottom: 2, background: t.bgCard,
