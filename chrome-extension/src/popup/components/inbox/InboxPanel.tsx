@@ -3,6 +3,7 @@ import { theme as t } from "@/shared/theme";
 import { useCards, useDecks, useCategories } from "@/popup/stores/dataStore";
 import { CefrBadge } from "@/popup/components/shared/CefrBadge";
 import { CategoryDot } from "@/popup/components/shared/CategoryDot";
+import { SearchInput, useCardSearch } from "@/popup/components/shared/SearchInput";
 import type { Card } from "@/shared/types";
 
 interface Props {
@@ -15,6 +16,7 @@ export function InboxPanel({ onOpenBatch, onOpenCard }: Props) {
   const { decks, add: addDeck } = useDecks();
   const { categories } = useCategories();
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const { query, setQuery, filtered, matchCount } = useCardSearch(inbox);
 
   const toggle = (id: string) => {
     const next = new Set(selected);
@@ -84,13 +86,16 @@ export function InboxPanel({ onOpenBatch, onOpenCard }: Props) {
         )}
       </div>
 
+      {inbox.length > 0 && (
+        <SearchInput query={query} onChange={setQuery} matchCount={matchCount} placeholder="Search inbox..." />
+      )}
       <div style={{ flex: 1, overflow: "auto", padding: "4px 8px" }}>
         {inbox.length === 0 && (
           <div style={{ textAlign: "center", padding: 30, color: t.textGhost, fontSize: 11 }}>
             Inbox is empty. Translate a word and save it here.
           </div>
         )}
-        {inbox.map((card) => {
+        {filtered.map((card) => {
           const isPending = !card.translation || card.translation === "translating...";
           return (
             <div key={card.id} onClick={(e) => handleCardClick(card, e)} style={{

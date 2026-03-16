@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { theme as t } from "@/shared/theme";
 import { api } from "@/shared/api";
-import { LANGUAGES } from "@/shared/constants";
+import { LANGUAGES, LANG_FEATURES } from "@/shared/constants";
 import { useCards } from "@/popup/stores/dataStore";
 import { CefrBadge } from "@/popup/components/shared/CefrBadge";
 import { LangDropdown } from "./LangDropdown";
@@ -62,8 +62,8 @@ export function TranslatePanel({ langFrom, langTo, onChangeLangFrom, onChangeLan
       setTranslating(false); // <-- UI shows translation NOW
 
       // Step 2: Enrich — slow, non-blocking, updates result when ready
-      const enrichWord = langFrom === "en" ? text.trim()
-        : langTo === "en" ? tr.translation
+      const enrichWord = LANG_FEATURES[langFrom]?.enrich ? text.trim()
+        : LANG_FEATURES[langTo]?.enrich ? tr.translation
         : null;
 
       if (enrichWord) {
@@ -119,7 +119,7 @@ export function TranslatePanel({ langFrom, langTo, onChangeLangFrom, onChangeLan
     setTimeout(() => setSaved(false), 2000);
   };
 
-  const enrichIsSource = langFrom === "en";
+  const enrichIsSource = !!LANG_FEATURES[langFrom]?.enrich;
 
   return (
     <div style={{ padding: 12, display: "flex", flexDirection: "column", height: "100%" }}>
