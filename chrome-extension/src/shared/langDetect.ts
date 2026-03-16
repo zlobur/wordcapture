@@ -27,8 +27,8 @@ loadTrigrams(IT_TRI, "it");
 loadTrigrams(PT_TRI, "pt");
 loadTrigrams(TR_TRI, "tr");
 
-function getScript(text: string): "cyrillic" | "cjk" | "latin" | "greek" | "korean" | "mixed" {
-  let cyrillic = 0, cjk = 0, latin = 0, greek = 0, korean = 0, total = 0;
+function getScript(text: string): "cyrillic" | "cjk" | "latin" | "greek" | "korean" | "arabic" | "mixed" {
+  let cyrillic = 0, cjk = 0, latin = 0, greek = 0, korean = 0, arabic = 0, total = 0;
   for (const char of text) {
     const code = char.codePointAt(0)!;
     if (code < 0x40) continue;
@@ -36,6 +36,7 @@ function getScript(text: string): "cyrillic" | "cjk" | "latin" | "greek" | "kore
     if (code >= 0x0400 && code <= 0x04FF) cyrillic++;
     else if ((code >= 0x3040 && code <= 0x30FF) || (code >= 0x4E00 && code <= 0x9FFF) || (code >= 0xFF00 && code <= 0xFFEF) || (code >= 0x31F0 && code <= 0x31FF)) cjk++;
     else if (code >= 0x0370 && code <= 0x03FF) greek++;
+    else if (code >= 0x0600 && code <= 0x06FF) arabic++;
     else if (code >= 0xAC00 && code <= 0xD7AF) korean++;
     else if ((code >= 0x0041 && code <= 0x007A) || (code >= 0x00C0 && code <= 0x024F)) latin++;
   }
@@ -43,6 +44,7 @@ function getScript(text: string): "cyrillic" | "cjk" | "latin" | "greek" | "kore
   if (cyrillic / total > 0.3) return "cyrillic";
   if (cjk / total > 0.2) return "cjk";
   if (greek / total > 0.3) return "greek";
+  if (arabic / total > 0.3) return "arabic";
   if (korean / total > 0.3) return "korean";
   if (latin / total > 0.3) return "latin";
   return "mixed";
@@ -78,6 +80,7 @@ export function detectLanguage(text: string): LangCode {
     case "cjk": return "ja";
     case "greek": return "el";
     case "korean": return "ko";
+    case "arabic": return "ar";
     case "latin": return detectLatinLang(clean);
     default: return detectLatinLang(clean);
   }

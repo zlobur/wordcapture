@@ -24,20 +24,25 @@ public class TranslateHandler
 
     public async Task<object> Translate(string text, string? sourceLang = null, string? targetLang = null)
     {
-        var src = (sourceLang ?? "en").ToUpperInvariant();
+        var src = (sourceLang ?? "").ToUpperInvariant();
         var tgt = ToDeepLTarget(targetLang ?? "ru");
 
         _httpClient.DefaultRequestHeaders.Authorization =
             new System.Net.Http.Headers.AuthenticationHeaderValue("DeepL-Auth-Key", _apiKey);
 
+        var formData = new Dictionary<string, string>
+        {
+            { "text", text },
+            { "target_lang", tgt }
+        };
+        if (!string.IsNullOrEmpty(src) && src != "AUTO")
+        {
+            formData.Add("source_lang", src);
+        }
+
         var response = await _httpClient.PostAsync(
             "https://api-free.deepl.com/v2/translate",
-            new FormUrlEncodedContent(new Dictionary<string, string>
-            {
-                { "text", text },
-                { "source_lang", src },
-                { "target_lang", tgt }
-            }));
+            new FormUrlEncodedContent(formData));
 
         response.EnsureSuccessStatusCode();
         var json = await response.Content.ReadAsStringAsync();
