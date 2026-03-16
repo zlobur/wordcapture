@@ -16,7 +16,7 @@ spec:
         - name: ghcr-secret
       containers:
         - name: wordcapture
-          image: ghcr.io/zlobur/wordcapture:bba359314aae3481abaf075c2139138e8f5ef4eb
+          image: ghcr.io/zlobur/wordcapture:bc61c0bda5a6d73c7b9a2ac2cf48c4059e72dd8e
           ports:
             - containerPort: 80
           env:
