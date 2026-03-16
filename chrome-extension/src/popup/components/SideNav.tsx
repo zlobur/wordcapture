@@ -9,10 +9,10 @@ interface Props {
 
 const ITEMS: { id: SectionId; icon: string; label: string; accent?: boolean; enabled?: boolean }[] = [
   { id: "translate", icon: "⇄", label: "Trans", enabled: true },
-  { id: "inbox", icon: "📥", label: "Inbox", enabled: false },
-  { id: "categories", icon: "📂", label: "Cards", enabled: false },
-  { id: "views", icon: "◈", label: "Views", enabled: false },
-  { id: "review", icon: "▶", label: "Learn", accent: true, enabled: false },
+  { id: "inbox", icon: "📥", label: "Inbox", enabled: true },
+  { id: "categories", icon: "📂", label: "Cards", enabled: true },
+  { id: "views", icon: "◈", label: "Views", enabled: true },
+  { id: "review", icon: "▶", label: "Learn", accent: true, enabled: true },
   { id: "settings", icon: "⚙", label: "", enabled: true },
 ];
 
