@@ -5,6 +5,7 @@ import { LANGUAGES, LANG_FEATURES } from "@/shared/constants";
 import { useCards } from "@/popup/stores/dataStore";
 import { CefrBadge } from "@/popup/components/shared/CefrBadge";
 import { LangDropdown } from "./LangDropdown";
+import { resolvePopupDirection } from "@/shared/langResolve";
 import type { LangCode } from "@/shared/types";
 
 interface Props {
@@ -36,21 +37,32 @@ export function TranslatePanel({ langFrom, langTo, onChangeLangFrom, onChangeLan
   const toLang = LANGUAGES.find((l) => l.code === langTo);
 
   const swap = () => {
-    const f = langFrom;
-    onChangeLangFrom(langTo);
-    onChangeLangTo(f);
+    const newFrom = langTo === "auto" as string ? langFrom : langTo;
+    const newTo = langFrom === "auto" as string ? langTo : langFrom;
+    onChangeLangFrom(newFrom);
+    onChangeLangTo(newTo);
+    if (input.trim()) {
+      setTimeout(() => doTranslate(input), 0);
+    }
   };
 
   const doTranslate = async (text: string) => {
     if (!text.trim()) return;
-    const generation = ++enrichAbort.current; // cancel any in-flight enrich
+    const generation = ++enrichAbort.current;
     setTranslating(true);
     setSaved(false);
     setResult(null);
 
+    const resolved = resolvePopupDirection(text, langFrom, langTo);
+    const effectiveFrom = resolved.from as LangCode;
+    const effectiveTo = resolved.to as LangCode;
+    if (resolved.changed) {
+      onChangeLangFrom(effectiveFrom);
+      onChangeLangTo(effectiveTo);
+    }
+
     try {
-      // Step 1: DeepL translate — fast, show immediately
-      const tr = await api.translate(text.trim(), langFrom, langTo);
+      const tr = await api.translate(text.trim(), effectiveFrom, effectiveTo);
       if (generation !== enrichAbort.current) return; // stale
 
       const res: TransResult = {
@@ -62,8 +74,8 @@ export function TranslatePanel({ langFrom, langTo, onChangeLangFrom, onChangeLan
       setTranslating(false); // <-- UI shows translation NOW
 
       // Step 2: Enrich — slow, non-blocking, updates result when ready
-      const enrichWord = LANG_FEATURES[langFrom]?.enrich ? text.trim()
-        : LANG_FEATURES[langTo]?.enrich ? tr.translation
+      const enrichWord = LANG_FEATURES[effectiveFrom]?.enrich ? text.trim()
+        : LANG_FEATURES[effectiveTo]?.enrich ? tr.translation
         : null;
 
       if (enrichWord) {
@@ -125,7 +137,7 @@ export function TranslatePanel({ langFrom, langTo, onChangeLangFrom, onChangeLan
     <div style={{ padding: 12, display: "flex", flexDirection: "column", height: "100%" }}>
       {/* Language dropdowns */}
       <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 12 }}>
-        <LangDropdown value={langFrom} onChange={onChangeLangFrom} />
+        <LangDropdown value={langFrom} onChange={onChangeLangFrom} showAuto />
         <button onClick={swap} style={{
           background: "none", border: "none", color: t.accent,
           cursor: "pointer", fontSize: 16, padding: "4px",
