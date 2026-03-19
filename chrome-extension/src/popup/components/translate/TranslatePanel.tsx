@@ -46,11 +46,11 @@ export function TranslatePanel({ langFrom, langTo, onChangeLangFrom, onChangeLan
     onChangeLangFrom(newFrom);
     onChangeLangTo(newTo);
     if (input.trim()) {
-      doTranslate(input, newFrom as string, newTo as string);
+      doTranslate(input, newFrom as string, newTo as string, true);
     }
   };
 
-  const doTranslate = async (text: string, overrideFrom?: string, overrideTo?: string) => {
+  const doTranslate = async (text: string, overrideFrom?: string, overrideTo?: string, skipAutoDetect?: boolean) => {
     if (!text.trim()) return;
     const generation = ++enrichAbort.current;
     setTranslating(true);
@@ -59,14 +59,22 @@ export function TranslatePanel({ langFrom, langTo, onChangeLangFrom, onChangeLan
 
     const currentFrom = overrideFrom ?? langFrom;
     const currentTo = overrideTo ?? langTo;
-    const resolved = resolvePopupDirection(text, currentFrom, currentTo);
-    const effectiveFrom = resolved.from as LangCode;
-    const effectiveTo = resolved.to as LangCode;
-    effectiveLangsRef.current = { from: effectiveFrom, to: effectiveTo };
-    if (resolved.changed) {
-      suppressAutoRef.current = true;
-      onChangeLangFrom(effectiveFrom);
-      onChangeLangTo(effectiveTo);
+    let effectiveFrom: LangCode;
+    let effectiveTo: LangCode;
+    if (skipAutoDetect) {
+      effectiveFrom = currentFrom as LangCode;
+      effectiveTo = currentTo as LangCode;
+      effectiveLangsRef.current = { from: effectiveFrom, to: effectiveTo };
+    } else {
+      const resolved = resolvePopupDirection(text, currentFrom, currentTo);
+      effectiveFrom = resolved.from as LangCode;
+      effectiveTo = resolved.to as LangCode;
+      effectiveLangsRef.current = { from: effectiveFrom, to: effectiveTo };
+      if (resolved.changed) {
+        suppressAutoRef.current = true;
+        onChangeLangFrom(effectiveFrom);
+        onChangeLangTo(effectiveTo);
+      }
     }
 
     try {

@@ -68,7 +68,10 @@ export function App() {
   const handleLangFrom = (l: LangCode) => { setLangFrom(l); updateSettings({ activeLang: l, defaultFromLang: l }); };
   const handleLangTo = (l: LangCode) => { setLangTo(l); updateSettings({ targetLang: l, defaultToLang: l }); };
   const handleSettingsUpdate = (patch: Partial<typeof settings>) => {
-    updateSettings(patch);
+    const fullPatch = { ...patch };
+    if (patch.defaultFromLang) { fullPatch.activeLang = patch.defaultFromLang; }
+    if (patch.defaultToLang) { fullPatch.targetLang = patch.defaultToLang; }
+    updateSettings(fullPatch);
     if (patch.defaultFromLang) setLangFrom(patch.defaultFromLang);
     if (patch.defaultToLang) setLangTo(patch.defaultToLang);
   };
@@ -77,7 +80,7 @@ export function App() {
     switch (section) {
       case "translate": return <TranslatePanel langFrom={langFrom} langTo={langTo} onChangeLangFrom={handleLangFrom} onChangeLangTo={handleLangTo} />;
       case "inbox": return <InboxPanel onOpenBatch={() => push("batch")} onOpenCard={(card) => push("cardDetail", card)} />;
-      case "categories": return <CategoriesPanel onSelectCategory={(cat: Category) => push("categoryDecks", cat)} onEditCategories={() => push("categorySettings")} />;
+      case "categories": return <CategoriesPanel onSelectCategory={(cat: Category) => push("categoryDecks", cat)} onEditCategories={() => push("categorySettings")} onSelectCard={(card: Card) => push("cardDetail", card)} />;
       case "views": return <ViewsPanel onSelectView={(v: SavedView) => push("viewDetail", v)} onNewView={() => push("viewDetail", null)} />;
       case "review": return <ReviewPanel />;
       case "settings": return <SettingsPanel settings={settings} onUpdate={handleSettingsUpdate} />;
