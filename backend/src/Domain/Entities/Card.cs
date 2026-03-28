@@ -1,38 +1,39 @@
 using System;
+using Domain.Enums;
+using Domain.ValueObjects;
 
 namespace Domain.Entities;
 
 public class Card
 {
-    public Card(
-        Guid cardId,
+    private Card() { }
+    public static Card Create(
         Guid userId,
-        string sourceLanguage,
-        string targetLanguage,
-        Enum status)
-    {
-        CardId = cardId;
-        UserId = userId;
-        SourceLanguage = sourceLanguage;
-        TargetLanguage = targetLanguage;
-        CreatedAt = DateTime.UtcNow;
-        UpdatedAt = DateTime.UtcNow;
-    }
-    public Guid CardId { get; init; }
-    public string Word { get; private set; }
-    public Guid UserId { get; init; }
-    public Guid DeckId { get; set; }
-    public string? Translation { get; set; }
-    public string SourceLanguage { get; init; }
-    public string TargetLanguage { get; init; }
-    public List<string> Tags { get; set; } = new List<string>();
-    public string? CefrLevel { get; set; }
-    public DateTime CreatedAt { get; init; }
-    public DateTime UpdatedAt { get; set; }
+        Guid deckId,
+        Word word,
+        Lang targetLanguage) =>
 
-    private string CheckLanguage(string lang)
-    {
-        if (string.IsNullOrEmpty(lang))
-            return lang;
-    }
+        new Card
+        {
+            CardId = Guid.NewGuid(),
+            UserId = userId,
+            DeckId = deckId,
+            Word = word,
+            TargetLanguage = targetLanguage,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow,
+            Status = CardStatus.Created,
+        };
+    public required Guid CardId { get; init; }
+    public required Guid UserId { get; init; }
+    public required Guid DeckId { get; set; }
+    public required Word Word { get; set; }
+    public required Lang TargetLanguage { get; init; }
+    public required CardStatus Status { get; set; }
+    public required DateTime CreatedAt { get; init; }
+    public required DateTime UpdatedAt { get; set; }
+    public string? Translation { get; set; }
+    public List<string> Tags { get; set; } = new List<string>();
+    // TODO Enum or valueObject ?
+    public string? CefrLevel { get; set; }
 }
