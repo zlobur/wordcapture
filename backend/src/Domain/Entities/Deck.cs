@@ -10,14 +10,14 @@ public class Deck
 
     public static Result<Deck> Create
     (
-        Guid userId,
+        string userId,
         string name
     ) => string.IsNullOrWhiteSpace(name)
         ? new Result<Deck>.Error(DeckErrors.NameEmpty, "Deck name cannot be empty")
         : new Result<Deck>.Success(
             new Deck
             {
-                DeckId = Guid.NewGuid(),
+                DeckId = Guid.CreateVersion7(),
                 UserId = userId,
                 Name = name.Trim(),
                 CreatedAt = DateTime.UtcNow,
@@ -25,7 +25,7 @@ public class Deck
             });
 
     public required Guid DeckId { get; init; }
-    public required Guid UserId { get; init; }
+    public required string UserId { get; init; }
     public required string Name { get; set; }
     public required DateTime CreatedAt { get; init; }
     public required DateTime UpdatedAt { get; set; }

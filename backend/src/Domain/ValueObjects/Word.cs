@@ -8,7 +8,7 @@ public record Word
     public string Text { get; }
     public Lang Lang { get; }
 
-    private Word(string text, Lang language)
+    internal Word(string text, Lang language)
     {
         Text = text;
         Lang = language;
@@ -16,10 +16,9 @@ public record Word
 
     public static Result<Word> Create(string text, Lang language) =>
         string.IsNullOrWhiteSpace(text)
-        ? new Result<Word>.Error(WordErrors.Empty, "Word cannot be empty")
-        : new Result<Word>.Success(new Word(text.Trim().ToLower(), language));
+        ? Result<Word>.Fail(new(WordErrors.Empty, "Word cannot be empty"))
+        : Result<Word>.Ok(new Word(text.Trim().ToLower(), language));
 
     public override string ToString() => Text;
 
 }
-// public record Word(string text, Lang language);

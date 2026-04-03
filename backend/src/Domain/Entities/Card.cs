@@ -8,14 +8,14 @@ public class Card
 {
     private Card() { }
     public static Card Create(
-        Guid userId,
-        Guid deckId,
+        string userId,
         Word word,
-        Lang targetLanguage) =>
+        Lang targetLanguage,
+        Guid? deckId) =>
 
         new Card
         {
-            CardId = Guid.NewGuid(),
+            CardId = Guid.CreateVersion7(),
             UserId = userId,
             DeckId = deckId,
             Word = word,
@@ -25,8 +25,8 @@ public class Card
             Status = CardStatus.Created,
         };
     public required Guid CardId { get; init; }
-    public required Guid UserId { get; init; }
-    public required Guid DeckId { get; set; }
+    public required string UserId { get; init; }
+    public required Guid? DeckId { get; set; }
     public required Word Word { get; set; }
     public required Lang TargetLanguage { get; init; }
     public required CardStatus Status { get; set; }

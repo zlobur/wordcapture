@@ -1,0 +1,5 @@
+### Test insert
+POST http://localhost:5253/test
+
+### Test get
+GET http://localhost:5253/test

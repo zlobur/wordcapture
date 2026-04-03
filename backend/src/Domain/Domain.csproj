@@ -16,4 +16,8 @@
     <Folder Include="ValueObjects/" />
   </ItemGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="Infrastructure" />
+  </ItemGroup>
+
 </Project>

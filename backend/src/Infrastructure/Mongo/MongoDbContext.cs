@@ -1,17 +1,18 @@
-using System;
 using MongoDB.Driver;
-using Microsoft.Extensions.Options;
+using Domain.Entities;
 
 namespace Infrastructure.Mongo;
 
 public sealed class MongoDbContext
 {
-    private readonly IMongoDatabase _database;
+    private readonly IMongoDatabase _db;
 
-    public MongoDbContext(IOptions<MongoDbSettings> options)
+    public MongoDbContext(IMongoDatabase db)
     {
-        var settings = options.Value;
-        var client = new MongoClient(settings.ConnectionString);
-        _database = client.GetDatabase(settings.DatabaseName);
+        _db = db;
     }
+
+    public IMongoCollection<Card> Cards => _db.GetCollection<Card>("cards");
+    public IMongoCollection<Deck> Decks => _db.GetCollection<Deck>("decks");
 }
+
