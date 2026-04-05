@@ -1,4 +1,3 @@
-using System;
 using Domain.Enums;
 using Domain.ValueObjects;
 
@@ -8,7 +7,7 @@ public class Card
 {
     private Card() { }
     public static Card Create(
-        string userId,
+        Guid userId,
         Word word,
         Lang targetLanguage,
         Guid? deckId) =>
@@ -25,7 +24,7 @@ public class Card
             Status = CardStatus.Created,
         };
     public required Guid CardId { get; init; }
-    public required string UserId { get; init; }
+    public required Guid UserId { get; init; }
     public required Guid? DeckId { get; set; }
     public required Word Word { get; set; }
     public required Lang TargetLanguage { get; init; }
