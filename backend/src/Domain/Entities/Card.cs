@@ -23,14 +23,21 @@ public class Card
             UpdatedAt = DateTime.UtcNow,
             Status = CardStatus.Created,
         };
+
+    public void MoveCard(Guid? deckId)
+    {
+        DeckId = deckId;
+        UpdatedAt = DateTime.Now;
+    }
+
     public required Guid CardId { get; init; }
     public required Guid UserId { get; init; }
-    public required Guid? DeckId { get; set; }
+    public Guid? DeckId { get; private set; }
     public required Word Word { get; set; }
     public required Lang TargetLanguage { get; init; }
     public required CardStatus Status { get; set; }
     public required DateTime CreatedAt { get; init; }
-    public required DateTime UpdatedAt { get; set; }
+    public DateTime UpdatedAt { get; private set; }
     public string? Translation { get; set; }
     public List<string> Tags { get; set; } = new List<string>();
     // TODO Enum or valueObject ?
