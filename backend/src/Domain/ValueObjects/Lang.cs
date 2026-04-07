@@ -3,11 +3,15 @@ using Domain.Results;
 
 namespace Domain.ValueObjects;
 
-public record class Lang
+public readonly record struct Lang
 {
     public string Code { get; }
 
-    internal Lang(string code) => Code = code;
+    internal Lang(string code)
+    {
+        Code = code;
+    }
+
     public static Result<Lang> Create(string code) =>
         code is not { Length: 2 }
             ? Result<Lang>.Fail(new(LangErrors.InvalidCode, "ISO 639-1 required"))

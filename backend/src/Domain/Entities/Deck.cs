@@ -1,4 +1,4 @@
-using System;
+using Domain.ValueObjects;
 using Domain.Results;
 using Domain.Errors;
 
@@ -12,21 +12,25 @@ public class Deck
     (
         string userId,
         string name
-    ) => string.IsNullOrWhiteSpace(name)
-        ? new Result<Deck>.Error(DeckErrors.NameEmpty, "Deck name cannot be empty")
-        : new Result<Deck>.Success(
+    ) => DeckName.Create(name).Map(deckName =>
             new Deck
             {
                 DeckId = Guid.CreateVersion7(),
                 UserId = userId,
-                Name = name.Trim(),
+                Name = deckName,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
             });
 
+    public void Rename(DeckName newName)
+    {
+        Name = newName;
+        UpdatedAt = DateTime.UtcNow;
+    }
+
     public required Guid DeckId { get; init; }
     public required string UserId { get; init; }
-    public required string Name { get; set; }
+    public DeckName Name { get; private set; }
     public required DateTime CreatedAt { get; init; }
-    public required DateTime UpdatedAt { get; set; }
+    public DateTime UpdatedAt { get; private set; }
 }

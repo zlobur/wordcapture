@@ -3,7 +3,7 @@ using Domain.Results;
 
 namespace Domain.ValueObjects;
 
-public record Word
+public readonly record struct Word
 {
     public string Text { get; }
     public Lang Lang { get; }

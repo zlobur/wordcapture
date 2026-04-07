@@ -11,8 +11,6 @@
   <ItemGroup>
     <Folder Include="Cards/Commands/" />
     <Folder Include="Cards/Commands/CreateCard/" />
-    <Folder Include="Decks/" />
-    <Folder Include="Decks/Commands/" />
     <Folder Include="Decks/Queries/" />
   </ItemGroup>
 
