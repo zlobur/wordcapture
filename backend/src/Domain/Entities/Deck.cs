@@ -28,9 +28,17 @@ public class Deck
         UpdatedAt = DateTime.UtcNow;
     }
 
+    public void Archive()
+    {
+        IsArchived = true;
+        ArchivedAt = DateTime.UtcNow;
+    }
+
     public required Guid DeckId { get; init; }
     public required string UserId { get; init; }
     public DeckName Name { get; private set; }
     public required DateTime CreatedAt { get; init; }
     public DateTime UpdatedAt { get; private set; }
+    public bool IsArchived { get; private set; }
+    public DateTime ArchivedAt { get; private set; }
 }
