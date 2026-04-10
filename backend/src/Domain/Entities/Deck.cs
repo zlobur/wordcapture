@@ -10,7 +10,7 @@ public class Deck
 
     public static Result<Deck> Create
     (
-        string userId,
+        Guid userId,
         string name
     ) => DeckName.Create(name).Map(deckName =>
             new Deck
@@ -35,7 +35,7 @@ public class Deck
     }
 
     public required Guid DeckId { get; init; }
-    public required string UserId { get; init; }
+    public required Guid UserId { get; init; }
     public DeckName Name { get; private set; }
     public required DateTime CreatedAt { get; init; }
     public DateTime UpdatedAt { get; private set; }

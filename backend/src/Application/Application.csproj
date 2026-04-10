@@ -12,6 +12,7 @@
     <Folder Include="Cards/Commands/CreateCard/" />
     <Folder Include="Cards/Commands/MoveCard/" />
     <Folder Include="Decks/Commands/ArchiveDeck/" />
+    <Folder Include="Decks/Commands/CreateDeck/" />
     <Folder Include="Decks/Queries/GetUserDecks/" />
   </ItemGroup>
 
