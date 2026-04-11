@@ -9,6 +9,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="Abstractions/" />
     <Folder Include="Cards/Commands/CreateCard/" />
     <Folder Include="Cards/Commands/MoveCard/" />
     <Folder Include="Decks/Commands/ArchiveDeck/" />

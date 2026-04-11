@@ -6,7 +6,4 @@ public record class CardCreated(
     Guid EventId,
     Guid UserId,
     DateTimeOffset OccurredAt,
-    Guid CardId,
-    string Original,
-    string SourceLanguage,
-    string Context) : IDomainEvent;
+    Guid CardId) : IDomainEvent;
