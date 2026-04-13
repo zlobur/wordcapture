@@ -1,4 +1,6 @@
+using Application.Abstractions;
 using Domain.Errors;
+using Domain.Events;
 using Domain.Repositories;
 using Domain.Results;
 using Mediator;
@@ -9,11 +11,13 @@ public sealed class MoveCardHandler : ICommandHandler<MoveCardCommand, Result<Un
 {
     private readonly ICardRepository _cardRepo;
     private readonly IDeckRepository _deckRepo;
+    private readonly IEventPublisher _publisher;
 
-    public MoveCardHandler(ICardRepository cardRepo, IDeckRepository deckRepo)
+    public MoveCardHandler(ICardRepository cardRepo, IDeckRepository deckRepo, IEventPublisher publisher)
     {
         _cardRepo = cardRepo;
         _deckRepo = deckRepo;
+        _publisher = publisher;
     }
 
     public async ValueTask<Result<Unit>> Handle(MoveCardCommand cmd, CancellationToken ct)
@@ -40,6 +44,16 @@ public sealed class MoveCardHandler : ICommandHandler<MoveCardCommand, Result<Un
         card.Value.MoveCard(targetDeckId);
 
         await _cardRepo.UpdateCardAsync(card.Value, ct);
+
+        var cardMovedEvent = new CardMoved(
+        EventId: Guid.CreateVersion7(),
+        UserId: cmd.UserId,
+        OccurredAt: DateTimeOffset.UtcNow,
+        CardId: cmd.CardId,
+        ToDeckId: cmd.TargetDeckId
+    );
+
+        await _publisher.Publish(cardMovedEvent, ct);
 
         return Result<Unit>.Ok(new Unit());
     }

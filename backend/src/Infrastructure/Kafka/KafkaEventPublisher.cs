@@ -1,31 +1,31 @@
-using System;
 using Application.Abstractions;
 using Domain.Abstractions;
 using Microsoft.Extensions.Options;
 using Confluent.Kafka;
 using System.Text.Json;
 using Microsoft.Extensions.Logging;
+using System.Text;
 
 namespace Infrastructure.Kafka;
 
-public class KafkaEventPublisher : IEventPublisher, IDisposable
+public sealed class KafkaEventPublisher : IEventPublisher, IDisposable
 {
     private static readonly JsonSerializerOptions jsonSerializerOptions =
         new JsonSerializerOptions
         {
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase
         };
-    private readonly KafkaOptions _opt;
+    private readonly KafkaOptions _options;
     private readonly ILogger<KafkaEventPublisher> _logger;
     private readonly IProducer<string, string> _producer;
-    public KafkaEventPublisher(IOptions<KafkaOptions> opt, ILogger<KafkaEventPublisher> logger)
+    public KafkaEventPublisher(IOptions<KafkaOptions> options, ILogger<KafkaEventPublisher> logger)
     {
-        _opt = opt.Value;
+        _options = options.Value;
         _logger = logger;
 
         var cfg = new ProducerConfig
         {
-            BootstrapServers = opt.Value.BootstrapServers,
+            BootstrapServers = options.Value.BootstrapServers,
             Acks = Acks.All,
             EnableIdempotence = true
         };
@@ -43,13 +43,7 @@ public class KafkaEventPublisher : IEventPublisher, IDisposable
     {
         try
         {
-            var msg = new Message<string, string>
-            {
-                Key = domainEvent.UserId.ToString(),
-                Value = JsonSerializer.Serialize(domainEvent, domainEvent.GetType(), jsonSerializerOptions)
-            };
-
-            await _producer.ProduceAsync(_opt.Topic, msg, ct);
+            await _producer.ProduceAsync(_options.Topic, CreateMessage(domainEvent), ct);
         }
         catch (ProduceException<string, string> e)
         {
@@ -57,5 +51,19 @@ public class KafkaEventPublisher : IEventPublisher, IDisposable
                 domainEvent.GetType().Name,
                 domainEvent.UserId);
         }
+    }
+
+    private Message<string, string> CreateMessage(IDomainEvent domainEvent)
+    {
+        var eventTypeNameBytes = Encoding.UTF8.GetBytes(domainEvent.GetType().Name);
+
+        var msg = new Message<string, string>
+        {
+            Headers = new Headers { { KafkaContract.HeadersEventType, eventTypeNameBytes } },
+            Key = domainEvent.UserId.ToString(),
+            Value = JsonSerializer.Serialize(domainEvent, domainEvent.GetType(), jsonSerializerOptions)
+        };
+
+        return msg;
     }
 }

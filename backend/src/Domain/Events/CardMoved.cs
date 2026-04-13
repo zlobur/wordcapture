@@ -6,4 +6,4 @@ public record class CardMoved(
     Guid UserId,
     DateTimeOffset OccurredAt,
     Guid CardId,
-    Guid ToDeckId) : IDomainEvent;
+    Guid? ToDeckId) : IDomainEvent;

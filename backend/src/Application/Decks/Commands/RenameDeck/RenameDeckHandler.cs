@@ -3,16 +3,20 @@ using Mediator;
 using Domain.Repositories;
 using Domain.ValueObjects;
 using Domain.Errors;
+using Application.Abstractions;
+using Domain.Events;
 
 namespace Application.Deck.Commands.RenameDeck;
 
 public sealed class RenameDeckHandler : ICommandHandler<RenameDeckCommand, Result<Unit>>
 {
     private readonly IDeckRepository _repo;
+    private readonly IEventPublisher _publisher;
 
-    public RenameDeckHandler(IDeckRepository repo)
+    public RenameDeckHandler(IDeckRepository repo, IEventPublisher publisher)
     {
         _repo = repo;
+        _publisher = publisher;
     }
 
     public async ValueTask<Result<Unit>> Handle(RenameDeckCommand cmd, CancellationToken ct)
@@ -34,6 +38,16 @@ public sealed class RenameDeckHandler : ICommandHandler<RenameDeckCommand, Resul
         deck.Value.Rename(newName.Value);
 
         await _repo.UpdateDeckAsync(deck.Value, ct);
+
+        var deckRenamedEvent = new DeckRenamed(
+            EventId: Guid.CreateVersion7(),
+            UserId: cmd.UserId,
+            OccurredAt: DateTimeOffset.UtcNow,
+            DeckId: cmd.DeckId,
+            NewName: cmd.NewName
+        );
+
+        await _publisher.Publish(deckRenamedEvent, ct);
 
         return Result<Unit>.Ok(new Unit());
     }
