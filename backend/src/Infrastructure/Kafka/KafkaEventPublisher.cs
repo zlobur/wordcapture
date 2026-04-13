@@ -10,11 +10,6 @@ namespace Infrastructure.Kafka;
 
 public sealed class KafkaEventPublisher : IEventPublisher, IDisposable
 {
-    private static readonly JsonSerializerOptions jsonSerializerOptions =
-        new JsonSerializerOptions
-        {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-        };
     private readonly KafkaOptions _options;
     private readonly ILogger<KafkaEventPublisher> _logger;
     private readonly IProducer<string, string> _producer;
@@ -61,7 +56,7 @@ public sealed class KafkaEventPublisher : IEventPublisher, IDisposable
         {
             Headers = new Headers { { KafkaContract.HeadersEventType, eventTypeNameBytes } },
             Key = domainEvent.UserId.ToString(),
-            Value = JsonSerializer.Serialize(domainEvent, domainEvent.GetType(), jsonSerializerOptions)
+            Value = JsonSerializer.Serialize(domainEvent, domainEvent.GetType(), KafkaContract.JsonSerializerOptions)
         };
 
         return msg;

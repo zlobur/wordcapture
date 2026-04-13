@@ -17,6 +17,7 @@ public static class KafkaServiceCollectionExtensions
             .ValidateOnStart();
 
         svc.AddSingleton<IEventPublisher, KafkaEventPublisher>();
+        svc.AddHostedService<EventConsumer>();
 
         return svc;
     }
